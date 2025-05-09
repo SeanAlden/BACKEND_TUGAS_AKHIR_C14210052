@@ -4,13 +4,15 @@ namespace App\Http\Controllers\Api;
 
 use App\Models\Product;
 use App\Models\Favorite;
+use App\Models\Notification;
 use App\Models\ProductStock;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use App\Models\ProductStatusHistory;
 use App\Http\Controllers\Controller;
+use App\Models\ProductStatusHistory;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use App\Models\ProductStatusHistoryDetail;
@@ -30,17 +32,106 @@ class ProductController extends Controller
     //     ], 200);
     // }
 
+    // public function index()
+    // {
+    //     // $products = Product::with(['category', 'stocks'])->get();
+    //     $products = Product::with(['category', 'stocks'])->withCount('transactionDetails')->get();
+
+    //     return response()->json([
+    //         'success' => true,
+    //         'data' => $products
+    //     ], 200);
+    // }
+
+    // public function index()
+    // {
+    //     $products = Product::with(['category', 'stocks'])->withCount('transactionDetails')->get();
+
+    //     foreach ($products as $product) {
+    //         foreach ($product->stocks as $stock) {
+    //             // Format tanggal untuk pesan
+    //             $expDateFormatted = Carbon::parse($stock->exp_date)->format('d-m-Y');
+
+    //             // === 1. CEK SISA STOK DI BAWAH 7 ===
+    //             if ($stock->stock < 7) {
+    //                 $message = "{$product->name} dengan kadaluarsa {$expDateFormatted} tersisa {$stock->stock} stok lagi";
+
+    //                 // Cek apakah notifikasi ini sudah ada
+    //                 $exists = Notification::where('message', $message)
+    //                     ->where('notification_type', 'Sisa Stok')
+    //                     ->exists();
+
+    //                 if (!$exists) {
+    //                     Notification::create([
+    //                         'message' => $message,
+    //                         'notification_type' => 'Sisa Stok',
+    //                     ]);
+    //                 }
+    //             }
+
+    //             // === 2. CEK TANGGAL KADALUARSA SUDAH DEKAT (< 30 hari dari hari ini) ===
+    //             $today = Carbon::today();
+    //             $expDate = Carbon::parse($stock->exp_date);
+
+    //             if ($expDate->diffInDays($today, false) <= 30 && $expDate->isFuture()) {
+    //                 $message = "Pada {$product->name}, terdapat stok dengan tanggal expired {$expDateFormatted} yang sudah dekat";
+
+    //                 // Cek apakah notifikasi ini sudah ada
+    //                 $exists = Notification::where('message', $message)
+    //                     ->where('notification_type', 'Tanggal Kadaluarsa')
+    //                     ->exists();
+
+    //                 if (!$exists) {
+    //                     Notification::create([
+    //                         'message' => $message,
+    //                         'notification_type' => 'Tanggal Kadaluarsa',
+    //                     ]);
+    //                 }
+    //             }
+    //         }
+    //     }
+
+    //     return response()->json([
+    //         'success' => true,
+    //         'data' => $products
+    //     ], 200);
+    // }
+
     public function index()
     {
-        // $products = Product::with(['category', 'stocks'])->get();
         $products = Product::with(['category', 'stocks'])->withCount('transactionDetails')->get();
+
+        foreach ($products as $product) {
+            foreach ($product->stocks as $stock) {
+                // 1. Cek jika stok di bawah 7
+                if ($stock->stock < 7) {
+                    $message = "{$product->name} dengan kadaluarsa " . Carbon::parse($stock->exp_date)->format('d-m-Y') . " tersisa {$stock->stock} stok lagi";
+                    Notification::firstOrCreate(
+                        ['message' => $message, 'notification_type' => 'Sisa Stok'],
+                        ['notification_time' => now()]
+                    );
+                }
+
+                // 2. Cek jika exp_date kurang dari 30 hari dari sekarang
+                $expDate = Carbon::parse($stock->exp_date);
+                $now = Carbon::now();
+                $soon = $now->copy()->addDays(90);
+
+                if ($expDate->greaterThanOrEqualTo($now) && $expDate->lessThanOrEqualTo($soon)) {
+                    $message = "Pada {$product->name}, terdapat stok dengan tanggal expired " . $expDate->format('d-m-Y') . " yang sudah dekat";
+                    Notification::firstOrCreate(
+                        ['message' => $message, 'notification_type' => 'Tanggal Kadaluarsa'],
+                        ['notification_time' => now()]
+                    );
+                }
+            }
+        }
 
         return response()->json([
             'success' => true,
             'data' => $products
         ], 200);
     }
-
     public function indexActiveProduct()
     {
         $products = Product::where('condition', 'active')
@@ -1228,3 +1319,4 @@ class ProductController extends Controller
         ]);
     }
 }
+

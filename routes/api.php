@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\EmployeeController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\ExitProductController;
 use App\Http\Controllers\Api\TransactionController;
+use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\EntryProductController;
 
 Route::get('/user', function (Request $request) {
@@ -109,3 +110,6 @@ Route::prefix('auth')->group(function () {
     Route::post('/verify-code', [AuthController::class, 'verifyResetCode']);
     Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 });
+
+Route::get('/notifications', [NotificationController::class, 'index']);
+Route::delete('/notifications/{id}', [NotificationController::class, 'destroy']);

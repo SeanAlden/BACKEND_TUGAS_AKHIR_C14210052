@@ -721,6 +721,7 @@ use App\Models\Product;
 use App\Models\SalesCount;
 use App\Models\EntropyGain;
 use App\Models\Transaction;
+use App\Models\Notification;
 use App\Models\DecisionTree;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -897,9 +898,48 @@ class AnalysisController extends Controller
             ];
         });
 
+        // Cek accuracy > 90% → buat notifikasi dan simpan
+        $highAccuracyNotifications = [];
+
+        foreach ($accuracy as $productId => $accValue) {
+            if ($accValue > 75) {
+                $product = Product::find($productId);
+                if ($product) {
+                    $message = "{$product->name} berpeluang {$accValue}% menjadi produk terlaris.";
+
+                    // Notification::create([
+                    //     'message' => $message,
+                    //     'notification_type' => 'Produk Terlaris'
+                    // ]);
+
+                    // $highAccuracyNotifications[] = $message;
+
+                    $existing = Notification::where('message', $message)
+                        ->where('notification_type', 'Produk Terlaris')
+                        ->first();
+
+                    if (!$existing) {
+                        Notification::create([
+                            'message' => $message,
+                            'notification_type' => 'Produk Terlaris'
+                        ]);
+                        $highAccuracyNotifications[] = $message;
+                    }
+                }
+            }
+        }
+
         $decisionTree = $this->buildDecisionTree($gainValues, $accuracy, $products);
 
-        return response()->json(compact('accuracy', 'products', 'entropyValues', 'gainValues', 'decisionTree'));
+        // return response()->json(compact('accuracy', 'products', 'entropyValues', 'gainValues', 'decisionTree'));
+        return response()->json([
+            'accuracy' => $accuracy,
+            'products' => $products,
+            'entropyValues' => $entropyValues,
+            'gainValues' => $gainValues,
+            'decisionTree' => $decisionTree,
+            'notifications' => $highAccuracyNotifications, // Tambahkan ke response
+        ]);
     }
 
     private function buildDecisionTree($gainValues, $accuracy, $products)
@@ -913,7 +953,8 @@ class AnalysisController extends Controller
 
         foreach ($accuracy as $productId => $acc) {
             $product = $products[$productId] ?? null;
-            if (!$product) continue;
+            if (!$product)
+                continue;
 
             $productName = $product['name'];
             $priceCategory = match (true) {
@@ -971,4 +1012,5 @@ class AnalysisController extends Controller
         return $tree;
     }
 }
+
 
