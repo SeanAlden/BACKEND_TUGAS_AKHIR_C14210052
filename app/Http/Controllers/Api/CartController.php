@@ -1,0 +1,899 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Models\Cart;
+use App\Models\Product;
+use App\Models\CartDetail;
+use App\Models\Transaction;
+use App\Models\ProductStock;
+use Illuminate\Http\Request;
+use App\Models\TransactionDetail;
+use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Auth;
+use App\Models\TransactionStatusHistory;
+
+class CartController extends Controller
+{
+    // public function addToCart(Request $request)
+    // {
+    //     $request->validate([
+    //         'user_id' => 'required|exists:users,id',
+    //         'product_id' => 'required|exists:products,id',
+    //         'shipping_method' => 'nullable|in:Reguler,Express,Ambil di tempat',
+    //         'payment_method' => 'nullable|in:Cash,Bank Transfer,OVO,Dana,COD',
+    //         'quantities' => 'required|array',
+    //         'quantities.*' => 'integer|min:1'
+    //     ]);
+
+    //     $product = Product::find($request->product_id);
+    //     $shippingMethod = $request->shipping_method ?? 'Reguler';
+    //     $paymentMethod = $request->payment_method ?? 'Cash';
+
+    //     $shippingFee = match ($shippingMethod) {
+    //         'Express' => 3500,
+    //         'Reguler' => 1750,
+    //         default => 0,
+    //     };
+
+    //     foreach ($request->quantities as $exp_date => $quantity) {
+    //         $existingCart = Cart::where('user_id', $request->user_id)
+    //             ->where('product_id', $request->product_id)
+    //             ->where('exp_date', $exp_date)
+    //             ->first();
+
+    //         $baseTotal = $product->price * $quantity;
+    //         $totalWithShipping = $baseTotal + $shippingFee;
+
+    //         if ($existingCart) {
+    //             $existingCart->quantity += $quantity;
+    //             $existingCart->gross_amount += $totalWithShipping;
+    //             $existingCart->shipping_method = $shippingMethod;
+    //             $existingCart->payment_method = $paymentMethod;
+    //             $existingCart->save();
+    //         } else {
+    //             Cart::create([
+    //                 'user_id' => $request->user_id,
+    //                 'product_id' => $request->product_id,
+    //                 'exp_date' => $exp_date,
+    //                 'quantity' => $quantity,
+    //                 'gross_amount' => $totalWithShipping,
+    //                 'shipping_method' => $shippingMethod,
+    //                 'payment_method' => $paymentMethod,
+    //             ]);
+    //         }
+    //     }
+
+    //     return response()->json([
+    //         'success' => true,
+    //         'message' => 'Produk berhasil ditambahkan ke keranjang'
+    //     ], 200);
+    // }
+
+    // public function addToCart(Request $request)
+    // {
+    //     $request->validate([
+    //         'product_id' => 'required|exists:products,id',
+    //         'shipping_method' => 'nullable|in:Reguler,Express,Ambil di tempat',
+    //         'payment_method' => 'nullable|in:Cash,Bank Transfer,OVO,Dana,COD',
+    //         'quantities' => 'required|array',
+    //         'quantities.*' => 'integer|min:1'
+    //     ]);
+
+    //     $userId = Auth::id();
+    //     $product = Product::find($request->product_id);
+    //     $shippingMethod = $request->shipping_method ?? 'Ambil di tempat';
+    //     $paymentMethod = $request->payment_method ?? 'Cash';
+
+    //     // $shippingFee = match ($shippingMethod) {
+    //     //     'Express' => 3500,
+    //     //     'Reguler' => 1750,
+    //     //     default => 0,
+    //     // };
+
+    //     foreach ($request->quantities as $exp_date => $quantity) {
+    //         $existingCart = Cart::where('user_id', $userId)
+    //             ->where('product_id', $request->product_id)
+    //             ->where('exp_date', $exp_date)
+    //             ->first();
+
+    //         $baseTotal = $product->price * $quantity;
+    //         // $totalWithShipping = $baseTotal + $shippingFee;
+    //         $totalWithShipping = $baseTotal;
+
+    //         if ($existingCart) {
+    //             $existingCart->quantity += $quantity;
+    //             $existingCart->gross_amount += $totalWithShipping;
+    //             $existingCart->shipping_method = $shippingMethod;
+    //             $existingCart->payment_method = $paymentMethod;
+    //             $existingCart->save();
+    //         } else {
+    //             Cart::create([
+    //                 'user_id' => $userId,
+    //                 'product_id' => $request->product_id,
+    //                 'exp_date' => $exp_date,
+    //                 'quantity' => $quantity,
+    //                 'gross_amount' => $totalWithShipping,
+    //                 'shipping_method' => $shippingMethod,
+    //                 'payment_method' => $paymentMethod,
+    //             ]);
+    //         }
+    //     }
+
+    //     return response()->json([
+    //         'success' => true,
+    //         'message' => 'Produk berhasil ditambahkan ke keranjang'
+    //     ], 200);
+    // }
+
+    public function addToCart(Request $request)
+    {
+        $request->validate([
+            'product_id' => 'required|exists:products,id',
+            'shipping_method' => 'nullable|in:Reguler,Express,Ambil di tempat',
+            'payment_method' => 'nullable|in:Cash,Bank Transfer,OVO,Dana,COD',
+            'quantities' => 'required|array',
+            'quantities.*' => 'integer|min:1'
+        ]);
+
+        $userId = Auth::id();
+        $product = Product::find($request->product_id);
+
+        // Ambil shipping dan payment method dari item cart pertama user (jika ada)
+        $existingCartItem = Cart::where('user_id', $userId)->first();
+
+        $shippingMethod = $request->shipping_method
+            ?? ($existingCartItem ? $existingCartItem->shipping_method : 'Ambil di tempat');
+
+        $paymentMethod = $request->payment_method
+            ?? ($existingCartItem ? $existingCartItem->payment_method : 'Cash');
+
+        foreach ($request->quantities as $exp_date => $quantity) {
+            $existingCart = Cart::where('user_id', $userId)
+                ->where('product_id', $request->product_id)
+                ->where('exp_date', $exp_date)
+                ->first();
+
+            $baseTotal = $product->price * $quantity;
+            $totalWithShipping = $baseTotal;
+
+            if ($existingCart) {
+                $existingCart->quantity += $quantity;
+                $existingCart->gross_amount += $totalWithShipping;
+                $existingCart->shipping_method = $shippingMethod;
+                $existingCart->payment_method = $paymentMethod;
+                $existingCart->save();
+            } else {
+                Cart::create([
+                    'user_id' => $userId,
+                    'product_id' => $request->product_id,
+                    'exp_date' => $exp_date,
+                    'quantity' => $quantity,
+                    'gross_amount' => $totalWithShipping,
+                    'shipping_method' => $shippingMethod,
+                    'payment_method' => $paymentMethod,
+                ]);
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Produk berhasil ditambahkan ke keranjang'
+        ], 200);
+    }
+
+
+    // public function updateCart(Request $request, $id)
+    // {
+    //     $request->validate([
+    //         'quantity' => 'required|integer|min:1',
+    //     ]);
+
+    //     $cart = Cart::findOrFail($id);
+    //     $shippingFee = match ($cart->shipping_method) {
+    //         'Express' => 3500,
+    //         'Reguler' => 1750,
+    //         default => 0,
+    //     };
+
+    //     $cart->quantity = $request->quantity;
+    //     $cart->gross_amount = ($cart->product->price * $request->quantity) + $shippingFee;
+    //     $cart->save();
+
+    //     return response()->json(['success' => true, 'cart' => $cart], 200);
+    // }
+
+    // public function deleteCart($id)
+    // {
+    //     Cart::destroy($id);
+    //     return response()->json(['success' => true, 'message' => 'Item removed from cart'], 200);
+    // }
+
+    public function updateCart(Request $request, $id)
+    {
+        $request->validate([
+            'quantity' => 'required|integer|min:1',
+        ]);
+
+        $cart = Cart::findOrFail($id);
+
+        if ($cart->user_id !== Auth::id()) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        // $shippingFee = match ($cart->shipping_method) {
+        //     'Express' => 3500,
+        //     'Reguler' => 1750,
+        //     default => 0,
+        // };
+
+        $cart->quantity = $request->quantity;
+        // $cart->gross_amount = ($cart->product->price * $request->quantity) + $shippingFee;
+        $cart->gross_amount = ($cart->product->price * $request->quantity);
+        $cart->save();
+
+        return response()->json(['success' => true, 'cart' => $cart], 200);
+    }
+
+    public function deleteCart($id)
+    {
+        $cart = Cart::findOrFail($id);
+
+        if ($cart->user_id !== Auth::id()) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $cart->delete();
+        return response()->json(['success' => true, 'message' => 'Item removed from cart'], 200);
+    }
+
+    public function checkout()
+    {
+        DB::beginTransaction();
+        try {
+            // $cartItems = Cart::all();
+
+            $userId = Auth::id();
+            $cartItems = Cart::where('user_id', $userId)->get();
+
+            // $userId = auth()->id();
+
+            if ($cartItems->isEmpty()) {
+                return response()->json(['success' => false, 'message' => 'Keranjang kosong'], 400);
+            }
+
+            // Ambil metode dari item pertama dalam cart
+            $firstItem = $cartItems->first();
+            $shippingMethod = $firstItem->shipping_method;
+            $paymentMethod = $firstItem->payment_method;
+
+            $shippingCost = match ($shippingMethod) {
+                'Express' => 3500,
+                'Reguler' => 1750,
+                default => 0,
+            };
+
+            $gross_amount = $cartItems->sum('gross_amount');
+            $total_payment = $gross_amount; // kalau belum ada ongkir
+            $transactionCode = 'TRX' . strtoupper(uniqid());
+
+            // Tentukan status berdasarkan shipping method
+            $initialStatus = ($shippingMethod === 'Ambil di tempat') ? 'Pesanan selesai' : 'Dalam pengemasan';
+
+            $transaction = Transaction::create([
+                'transaction_code' => $transactionCode,
+                'gross_amount' => $gross_amount,
+                'total_payment' => $total_payment + $shippingCost,
+                'payment_method' => $paymentMethod,
+                'shipping_method' => $shippingMethod,
+                'shipping_cost' => $shippingCost,
+                // 'status' => 'Dalam pengemasan', // status awal default
+                'status' => $initialStatus, // status awal default
+                'user_id' => $userId,
+                'transaction_date' => now(),
+            ]);
+
+            TransactionStatusHistory::create([
+                'transaction_id' => $transaction->id,
+                // 'status' => 'Dalam pengemasan',
+                'status' => $initialStatus,
+                'changed_at' => now(),
+            ]);
+
+            foreach ($cartItems as $item) {
+                $stock = ProductStock::where('product_id', $item->product_id)
+                    ->where('exp_date', $item->exp_date)
+                    ->where('stock', '>=', $item->quantity)
+                    ->first();
+
+                if (!$stock) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => "Stok tidak mencukupi untuk produk ID {$item->product_id} dengan tanggal expired {$item->exp_date}"
+                    ], 400);
+                }
+
+                $product = Product::find($item->product_id); // pastikan model Product ada
+
+                TransactionDetail::create([
+                    'transaction_id' => $transaction->id,
+                    'product_id' => $item->product_id,
+                    'exp_date' => $item->exp_date,
+                    'quantity' => $item->quantity,
+                    'product_name' => $product->name,
+                    'product_code' => $product->code,
+                    'product_price' => $product->price,
+                    'product_photo' => $product->photo,
+                    'stock_before' => $stock->stock + $item->quantity,
+                    'stock_after' => $stock->stock,
+                ]);
+
+                $stock->stock -= $item->quantity;
+                $stock->stock == 0 ? $stock->delete() : $stock->save();
+
+                $item->delete();
+            }
+
+            DB::commit();
+            return response()->json(['success' => true, 'transaction' => $transaction], 201);
+        }
+        // catch (\Exception $e) {
+        //     DB::rollBack();
+        //     return response()->json(['error' => 'Gagal melakukan transaksi: ' . $e->getMessage()], 500);
+        // }
+        catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'error' => 'Gagal melakukan transaksi',
+                'message' => $e->getMessage(),
+                'trace' => $e->getTrace()
+            ], 500);
+        }
+    }
+
+    // public function show()
+    // {
+    //     $cartItems = Cart::with('product')->get()->groupBy(function ($item) {
+    //         return $item->product_id . '_' . $item->exp_date;
+    //     });
+
+    //     $shippingMethods = ['Reguler', 'Express', 'Ambil di tempat'];
+    //     $paymentMethods = ['Cash', 'Bank Transfer', 'OVO', 'Dana', 'COD'];
+
+    //     $mergedCart = $cartItems->map(function ($groupedItems) {
+    //         $userId = Auth::id();
+    //         $firstItem = $groupedItems->first();
+    //         $stock = ProductStock::where('product_id', $firstItem->product_id)
+    //             ->where('exp_date', $firstItem->exp_date)
+    //             ->value('stock') ?? 0;
+
+    //         return [
+    //             'id' => $firstItem->id,
+    //             'user_id' => $userId,
+    //             'product_id' => $firstItem->product_id,
+    //             'product_name' => $firstItem->product->name,
+    //             'product_image' => $firstItem->product->photo,
+    //             'product_price' => $firstItem->product->price,
+    //             'expired_date' => $firstItem->exp_date,
+    //             'quantity' => $groupedItems->sum('quantity'),
+    //             'gross_amount' => $groupedItems->sum('gross_amount'),
+    //             'shipping_method' => $firstItem->shipping_method,
+    //             'payment_method' => $firstItem->payment_method,
+    //             'stock' => $stock,
+    //         ];
+    //     })->values();
+
+    //     return response()->json([
+    //         'success' => true,
+    //         'cart' => $mergedCart,
+    //         'shipping_methods' => $shippingMethods,
+    //         'payment_methods' => $paymentMethods,
+    //     ], 200);
+    // }
+
+    // public function show()
+    // {
+    //     $userId = Auth::id(); // ambil ID user yang sedang login
+
+    //     $cartItems = Cart::with('product')
+    //         ->where('user_id', $userId) // filter berdasarkan user login
+    //         ->get()
+    //         ->groupBy(function ($item) {
+    //             return $item->product_id . '_' . $item->exp_date;
+    //         });
+
+    //     $shippingMethods = ['Reguler', 'Express', 'Ambil di tempat'];
+    //     $paymentMethods = ['Cash', 'Bank Transfer', 'OVO', 'Dana', 'COD'];
+
+    //     $mergedCart = $cartItems->map(function ($groupedItems) use ($userId) {
+    //         $firstItem = $groupedItems->first();
+    //         $stock = ProductStock::where('product_id', $firstItem->product_id)
+    //             ->where('exp_date', $firstItem->exp_date)
+    //             ->value('stock') ?? 0;
+
+    //         return [
+    //             'id' => $firstItem->id,
+    //             'user_id' => $userId,
+    //             'product_id' => $firstItem->product_id,
+    //             'product_name' => $firstItem->product->name,
+    //             'product_image' => $firstItem->product->photo,
+    //             'product_price' => $firstItem->product->price,
+    //             'expired_date' => $firstItem->exp_date,
+    //             'quantity' => $groupedItems->sum('quantity'),
+    //             'gross_amount' => $groupedItems->sum('gross_amount'),
+    //             'shipping_method' => $firstItem->shipping_method,
+    //             'payment_method' => $firstItem->payment_method,
+    //             'stock' => $stock,
+    //         ];
+    //     })->values();
+
+    //     return response()->json([
+    //         'success' => true,
+    //         'cart' => $mergedCart,
+    //         'shipping_methods' => $shippingMethods,
+    //         'payment_methods' => $paymentMethods,
+    //     ], 200);
+    // }
+
+    public function show()
+    {
+        $userId = Auth::id(); // ambil ID user yang sedang login
+
+        // Ambil semua item cart milik user saat ini
+        $cartItems = Cart::with('product')
+            ->where('user_id', $userId)
+            ->get()
+            ->groupBy(function ($item) {
+                return $item->product_id . '_' . $item->exp_date;
+            });
+
+        // Daftar product_id unik dari cart user
+        $productIdsInCart = $cartItems->pluck('0.product_id')->unique()->values();
+
+        // Ambil seluruh expired date + stok untuk masing-masing product_id
+        $productStockList = ProductStock::whereIn('product_id', $productIdsInCart)->get()->groupBy('product_id');
+
+        $shippingMethods = ['Reguler', 'Express', 'Ambil di tempat'];
+        $paymentMethods = ['Cash', 'Bank Transfer', 'OVO', 'Dana', 'COD'];
+
+        // Buat array cart berdasarkan grup product_id + exp_date
+        $mergedCart = $cartItems->map(function ($groupedItems) use ($userId) {
+            $firstItem = $groupedItems->first();
+            $stock = ProductStock::where('product_id', $firstItem->product_id)
+                ->where('exp_date', $firstItem->exp_date)
+                ->value('stock') ?? 0;
+
+            return [
+                'id' => $firstItem->id,
+                'user_id' => $userId,
+                'product_id' => $firstItem->product_id,
+                'product_name' => $firstItem->product->name,
+                'product_image' => $firstItem->product->photo,
+                'product_price' => $firstItem->product->price,
+                'expired_date' => $firstItem->exp_date,
+                'quantity' => $groupedItems->sum('quantity'),
+                'gross_amount' => $groupedItems->sum('gross_amount'),
+                'shipping_method' => $firstItem->shipping_method,
+                'payment_method' => $firstItem->payment_method,
+                'stock' => $stock,
+            ];
+        })->values();
+
+        // Susun daftar exp_date dan stok untuk setiap product_id
+        $productExpDateStock = $productStockList->map(function ($stocks) {
+            return $stocks->map(function ($stock) {
+                return [
+                    'exp_date' => $stock->exp_date,
+                    'stock' => $stock->stock,
+                ];
+            })->values();
+        });
+
+        return response()->json([
+            'success' => true,
+            'cart' => $mergedCart,
+            'shipping_methods' => $shippingMethods,
+            'payment_methods' => $paymentMethods,
+            'product_exp_dates' => $productExpDateStock, // tambahan baru
+        ], 200);
+    }
+
+    // public function show()
+    // {
+    //     $userId = Auth::id();
+
+    //     $carts = Cart::with(['product', 'details.productStock'])->where('user_id', $userId)->get();
+
+    //     $cartData = $carts->map(function ($cart) {
+    //         return [
+    //             'id' => $cart->id,
+    //             'product_name' => $cart->product->name,
+    //             'product_image' => $cart->product->photo,
+    //             'product_price' => $cart->product->price,
+    //             'shipping_method' => $cart->shipping_method,
+    //             'payment_method' => $cart->payment_method,
+    //             'gross_amount' => $cart->gross_amount,
+    //             'details' => $cart->details->map(function ($detail) {
+    //                 return [
+    //                     'cart_detail_id' => $detail->id,
+    //                     'exp_date' => $detail->productStock->exp_date,
+    //                     'quantity' => $detail->quantity,
+    //                     'stock' => $detail->productStock->stock,
+    //                     'gross_amount' => $detail->gross_amount,
+    //                 ];
+    //             }),
+    //         ];
+    //     });
+
+    //     $shippingMethods = ['Reguler', 'Express', 'Ambil di tempat'];
+    //     $paymentMethods = ['Cash', 'Bank Transfer', 'OVO', 'Dana', 'COD'];
+
+    //     return response()->json([
+    //         'success' => true,
+    //         'cart' => $cartData,
+    //         'shipping_methods' => $shippingMethods,
+    //         'payment_methods' => $paymentMethods,
+    //     ]);
+    // }
+
+    public function updateField(Request $request)
+    {
+        $user = Auth::user(); // atau sesuaikan dengan otentikasi kamu
+        $field = $request->input('field');
+        $value = $request->input('value');
+
+        $validFields = ['shipping_method', 'payment_method'];
+
+        if (!in_array($field, $validFields)) {
+            return response()->json(['message' => 'Field tidak valid'], 422);
+        }
+
+        // Update semua cart milik user, bisa disesuaikan dengan id cart jika perlu
+        Cart::where('user_id', $user->id)->update([$field => $value]);
+
+        // Ambil semua cart item milik user
+        $cartItems = Cart::where('user_id', $user->id)->get();
+        // $cartItems = Cart::all();
+
+        foreach ($cartItems as $cart) {
+            $cart->$field = $value;
+            $cart->save();
+        }
+
+        return response()->json(['message' => 'Berhasil memperbarui data'], 200);
+    }
+}
+
+
+// namespace App\Http\Controllers\Api;
+
+// use App\Models\Cart;
+// use App\Models\Product;
+// use App\Models\Transaction;
+// use App\Models\ProductStock;
+// use Illuminate\Http\Request;
+// use App\Models\TransactionDetail;
+// use Illuminate\Support\Facades\DB;
+// use App\Http\Controllers\Controller;
+// use Illuminate\Support\Facades\Auth;
+// use App\Models\TransactionStatusHistory;
+
+// class CartController extends Controller
+// {
+//     public function addToCart(Request $request)
+//     {
+//         $request->validate([
+//             'product_id' => 'required|exists:products,id',
+//             'shipping_method' => 'nullable|in:Reguler,Express,Ambil di tempat',
+//             'payment_method' => 'nullable|in:Cash,Bank Transfer,OVO,Dana,COD',
+//             'quantities' => 'required|array',
+//             'quantities.*' => 'integer|min:1'
+//         ]);
+
+//         $userId = Auth::id();
+//         $product = Product::find($request->product_id);
+
+//         // Ambil shipping dan payment method dari item cart pertama user (jika ada)
+//         $existingCartItem = Cart::where('user_id', $userId)->first();
+
+//         $shippingMethod = $request->shipping_method
+//             ?? ($existingCartItem ? $existingCartItem->shipping_method : 'Ambil di tempat');
+
+//         $paymentMethod = $request->payment_method
+//             ?? ($existingCartItem ? $existingCartItem->payment_method : 'Cash');
+
+//         foreach ($request->quantities as $exp_date => $quantity) {
+//             $existingCart = Cart::where('user_id', $userId)
+//                 ->where('product_id', $request->product_id)
+//                 ->where('exp_date', $exp_date)
+//                 ->first();
+
+//             $baseTotal = $product->price * $quantity;
+//             $totalWithShipping = $baseTotal;
+
+//             if ($existingCart) {
+//                 $existingCart->quantity += $quantity;
+//                 $existingCart->gross_amount += $totalWithShipping;
+//                 $existingCart->shipping_method = $shippingMethod;
+//                 $existingCart->payment_method = $paymentMethod;
+//                 $existingCart->save();
+//             } else {
+//                 Cart::create([
+//                     'user_id' => $userId,
+//                     'product_id' => $request->product_id,
+//                     'exp_date' => $exp_date,
+//                     'quantity' => $quantity,
+//                     'gross_amount' => $totalWithShipping,
+//                     'shipping_method' => $shippingMethod,
+//                     'payment_method' => $paymentMethod,
+//                 ]);
+//             }
+//         }
+
+//         return response()->json([
+//             'success' => true,
+//             'message' => 'Produk berhasil ditambahkan ke keranjang'
+//         ], 200);
+//     }
+
+//     public function updateCart(Request $request, $id)
+//     {
+//         $request->validate([
+//             'quantity' => 'required|integer|min:1',
+//         ]);
+
+//         $cart = Cart::findOrFail($id);
+
+//         if ($cart->user_id !== Auth::id()) {
+//             return response()->json(['error' => 'Unauthorized'], 403);
+//         }
+
+//         $newQuantity = $request->quantity;
+
+//         // Implementasi update quantity FIFO
+//         $this->updateQuantityFIFO($cart->user_id, $cart->product_id, $newQuantity);
+
+//         return response()->json(['success' => true, 'message' => 'Kuantitas berhasil diperbarui'], 200);
+//     }
+
+//     private function updateQuantityFIFO($userId, $productId, $newQuantity)
+//     {
+//         DB::beginTransaction();
+
+//         try {
+//             // Ambil semua cart items user dan product tertentu, urutkan exp_date ascending (FIFO)
+//             $cartItems = Cart::where('user_id', $userId)
+//                 ->where('product_id', $productId)
+//                 ->orderBy('exp_date', 'asc')
+//                 ->lockForUpdate()
+//                 ->get();
+
+//             if ($cartItems->isEmpty()) {
+//                 DB::rollBack();
+//                 return false;
+//             }
+
+//             $totalQuantity = $cartItems->sum('quantity');
+
+//             if ($newQuantity > $totalQuantity) {
+//                 // Jika quantity baru lebih besar dari total quantity di cart,
+//                 // berikan respons error atau sesuaikan sesuai kebutuhan
+//                 DB::rollBack();
+//                 return false;
+//             }
+
+//             $remaining = $newQuantity;
+
+//             foreach ($cartItems as $cart) {
+//                 if ($remaining <= 0) {
+//                     // Jika sudah terpenuhi, hapus cart dengan quantity yang tersisa (jika ada)
+//                     if ($cart->quantity > 0) {
+//                         $cart->quantity = 0;
+//                         $cart->save();
+//                         $cart->delete();
+//                     }
+//                     continue;
+//                 }
+
+//                 if ($cart->quantity <= $remaining) {
+//                     $remaining -= $cart->quantity;
+//                     $cart->quantity = 0;
+//                     $cart->save();
+//                     $cart->delete();
+//                 } else {
+//                     $cart->quantity = $remaining;
+//                     $cart->save();
+//                     $remaining = 0;
+//                 }
+//             }
+
+//             DB::commit();
+//             return true;
+//         } catch (\Exception $e) {
+//             DB::rollBack();
+//             return false;
+//         }
+//     }
+
+//     public function deleteCart($id)
+//     {
+//         $cart = Cart::findOrFail($id);
+
+//         if ($cart->user_id !== Auth::id()) {
+//             return response()->json(['error' => 'Unauthorized'], 403);
+//         }
+
+//         $cart->delete();
+//         return response()->json(['success' => true, 'message' => 'Item removed from cart'], 200);
+//     }
+
+//     public function checkout()
+//     {
+//         DB::beginTransaction();
+//         try {
+//             $userId = Auth::id();
+//             $cartItems = Cart::where('user_id', $userId)->get();
+
+//             if ($cartItems->isEmpty()) {
+//                 return response()->json(['success' => false, 'message' => 'Keranjang kosong'], 400);
+//             }
+
+//             // Ambil metode dari item pertama dalam cart
+//             $firstItem = $cartItems->first();
+//             $shippingMethod = $firstItem->shipping_method;
+//             $paymentMethod = $firstItem->payment_method;
+
+//             $shippingCost = match ($shippingMethod) {
+//                 'Express' => 3500,
+//                 'Reguler' => 1750,
+//                 default => 0,
+//             };
+
+//             $gross_amount = $cartItems->sum('gross_amount');
+//             $total_payment = $gross_amount + $shippingCost; // total dengan ongkir
+//             $transactionCode = 'TRX' . strtoupper(uniqid());
+
+//             // Tentukan status berdasarkan shipping method
+//             $initialStatus = ($shippingMethod === 'Ambil di tempat') ? 'Pesanan selesai' : 'Dalam pengemasan';
+
+//             $transaction = Transaction::create([
+//                 'transaction_code' => $transactionCode,
+//                 'gross_amount' => $gross_amount,
+//                 'total_payment' => $total_payment,
+//                 'payment_method' => $paymentMethod,
+//                 'shipping_method' => $shippingMethod,
+//                 'shipping_cost' => $shippingCost,
+//                 'status' => $initialStatus,
+//                 'user_id' => $userId,
+//                 'transaction_date' => now(),
+//             ]);
+
+//             TransactionStatusHistory::create([
+//                 'transaction_id' => $transaction->id,
+//                 'status' => $initialStatus,
+//                 'changed_at' => now(),
+//             ]);
+
+//             foreach ($cartItems as $item) {
+//                 $stock = ProductStock::where('product_id', $item->product_id)
+//                     ->where('exp_date', $item->exp_date)
+//                     ->where('stock', '>=', $item->quantity)
+//                     ->first();
+
+//                 if (!$stock) {
+//                     return response()->json([
+//                         'success' => false,
+//                         'message' => "Stok tidak mencukupi untuk produk ID {$item->product_id} dengan tanggal expired {$item->exp_date}"
+//                     ], 400);
+//                 }
+
+//                 $product = Product::find($item->product_id);
+
+//                 TransactionDetail::create([
+//                     'transaction_id' => $transaction->id,
+//                     'product_id' => $item->product_id,
+//                     'exp_date' => $item->exp_date,
+//                     'quantity' => $item->quantity,
+//                     'product_name' => $product->name,
+//                     'product_code' => $product->code,
+//                     'product_price' => $product->price,
+//                     'product_photo' => $product->photo,
+//                     'stock_before' => $stock->stock + $item->quantity,
+//                     'stock_after' => $stock->stock - $item->quantity,
+//                 ]);
+
+//                 $stock->stock -= $item->quantity;
+//                 if ($stock->stock == 0) {
+//                     $stock->delete();
+//                 } else {
+//                     $stock->save();
+//                 }
+
+//                 $item->delete();
+//             }
+
+//             DB::commit();
+//             return response()->json(['success' => true, 'transaction' => $transaction], 201);
+//         } catch (\Exception $e) {
+//             DB::rollBack();
+//             return response()->json([
+//                 'error' => 'Gagal melakukan transaksi',
+//                 'message' => $e->getMessage(),
+//                 'trace' => $e->getTrace()
+//             ], 500);
+//         }
+//     }
+
+//     public function show()
+//     {
+//         $userId = Auth::id();
+
+//         $cartItems = Cart::with('product')
+//             ->where('user_id', $userId)
+//             ->get()
+//             ->groupBy(function ($item) {
+//                 return $item->product_id . '_' . $item->exp_date;
+//             });
+
+//         $shippingMethods = ['Reguler', 'Express', 'Ambil di tempat'];
+//         $paymentMethods = ['Cash', 'Bank Transfer', 'OVO', 'Dana', 'COD'];
+
+//         $mergedCart = $cartItems->map(function ($groupedItems) use ($userId) {
+//             $firstItem = $groupedItems->first();
+//             $stock = ProductStock::where('product_id', $firstItem->product_id)
+//                 ->where('exp_date', $firstItem->exp_date)
+//                 ->value('stock') ?? 0;
+
+//             return [
+//                 'id' => $firstItem->id,
+//                 'user_id' => $userId,
+//                 'product_id' => $firstItem->product_id,
+//                 'product_name' => $firstItem->product->name,
+//                 'product_image' => $firstItem->product->photo,
+//                 'product_price' => $firstItem->product->price,
+//                 'expired_date' => $firstItem->exp_date,
+//                 'quantity' => $groupedItems->sum('quantity'),
+//                 'gross_amount' => $groupedItems->sum('gross_amount'),
+//                 'shipping_method' => $firstItem->shipping_method,
+//                 'payment_method' => $firstItem->payment_method,
+//                 'stock' => $stock,
+//             ];
+//         })->values();
+
+//         return response()->json([
+//             'success' => true,
+//             'cart' => $mergedCart,
+//             'shipping_methods' => $shippingMethods,
+//             'payment_methods' => $paymentMethods,
+//         ], 200);
+//     }
+
+//     public function updateField(Request $request)
+//     {
+//         $user = Auth::user();
+//         $field = $request->input('field');
+//         $value = $request->input('value');
+
+//         $validFields = ['shipping_method', 'payment_method'];
+
+//         if (!in_array($field, $validFields)) {
+//             return response()->json(['message' => 'Field tidak valid'], 422);
+//         }
+
+//         Cart::where('user_id', $user->id)->update([$field => $value]);
+
+//         $cartItems = Cart::where('user_id', $user->id)->get();
+
+//         foreach ($cartItems as $cart) {
+//             $cart->$field = $value;
+//             $cart->save();
+//         }
+
+//         return response()->json(['message' => 'Berhasil memperbarui data'], 200);
+//     }
+// }
+
+//     }
+// }
+
