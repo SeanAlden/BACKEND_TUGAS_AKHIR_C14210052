@@ -8,6 +8,7 @@ use Illuminate\Routing\Controller;
 
 class NotificationController extends Controller
 {
+    //
     // Menampilkan semua notifikasi
     public function index()
     {

@@ -70,6 +70,7 @@ class EmployeeController extends Controller
         ]);
     }
 
+    //
     // public function update(Request $request, $id)
     // {
     //     $employee = Employee::find($id);

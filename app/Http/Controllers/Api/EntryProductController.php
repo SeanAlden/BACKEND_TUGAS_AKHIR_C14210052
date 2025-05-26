@@ -10,6 +10,7 @@ use App\Http\Controllers\Controller;
 
 class EntryProductController extends Controller
 {
+    //
     // public function store(Request $request)
     // {
     //     $validated = $request->validate([

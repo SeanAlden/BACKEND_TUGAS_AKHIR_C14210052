@@ -87,7 +87,8 @@ class TransactionController extends Controller
                     'product_name' => $detail->product_name,
                     'product_code' => $detail->product_code,
                     'product_price' => $detail->product_price,
-                    'product_photo' => $detail->product_photo,
+                    // 'product_photo' => $detail->product_photo,
+                    'product_photo' => $detail->product->photo,
                     'stock_before' => $detail->stock_before,
                     'stock_after' => $detail->stock_after,
                 ];
@@ -429,7 +430,8 @@ class TransactionController extends Controller
                     'product_name' => $detail->product_name,
                     'product_code' => $detail->product_code,
                     'product_price' => $detail->product_price,
-                    'product_photo' => $detail->product_photo,
+                    'product_photo' => $detail->product->photo,
+                    // 'product_photo' => $detail->product_photo,
                     'stock_before' => $detail->stock_before,
                     'stock_after' => $detail->stock_after,
                 ];

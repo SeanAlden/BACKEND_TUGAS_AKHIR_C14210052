@@ -21,6 +21,7 @@ class ProductController extends Controller
 {
     // exp masing masing
 
+    //
     // public function index()
     // {
     //     // $products = Product::all();

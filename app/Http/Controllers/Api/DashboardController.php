@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB as FacadesDB;
 
 class DashboardController extends Controller
 {
+    //
     // public function index()
     // {
     //     // Total pendapatan dari semua transaksi
