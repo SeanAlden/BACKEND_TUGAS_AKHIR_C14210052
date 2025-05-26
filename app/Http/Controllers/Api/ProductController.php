@@ -306,7 +306,7 @@ class ProductController extends Controller
                 'category_id' => 'required',
                 'stocks' => 'required|array',
                 'stocks.*.exp_date' => 'required|date',
-                'stocks.*.stock' => 'required|numeric|min:10'
+                'stocks.*.stock' => 'required|numeric|min:1'
             ]);
 
             // Cek apakah kode produk sudah ada
@@ -1113,21 +1113,22 @@ class ProductController extends Controller
     //     return response()->json(['stock' => $stock ?? 0]);
     // }
 
-    public function getTotalStock($product_id)
-    {
-        $totalStock = ProductStock::where('product_id', $product_id)->sum('stock');
+    // public function getTotalStock($product_id)
+    // {
+    //     $totalStock = ProductStock::where('product_id', $product_id)->sum('stock');
 
-        return response()->json(['stock' => $totalStock ?? 0]);
-    }
+    //     return response()->json(['stock' => $totalStock ?? 0]);
+    // }
 
-    public function getStockByDate($product_id, $exp_date)
-    {
-        $stock = ProductStock::where('product_id', $product_id)
-            ->where('exp_date', $exp_date)
-            ->first();
+    // public function getStockByDate($product_id, $exp_date)
+    // {
+    //     $stock = ProductStock::where('product_id', $product_id)
+    //         ->where('exp_date', $exp_date)
+    //         ->first();
 
-        return response()->json(['stock' => $stock ? $stock->stock : 0]);
-    }
+    //     return response()->json(['stock' => $stock ? $stock->stock : 0]);
+    // }
+
     // private function deleteEmptyStocks()
     // {
     //     ProductStock::where('stock', 0)->delete();
@@ -1307,15 +1308,29 @@ class ProductController extends Controller
         ]);
     }
 
+    // public function getAllFavorites()
+    // {
+    //     $user = Auth::user();
+
+    //     $favoriteProductIds = Favorite::where('user_id', $user->id)
+    //         ->pluck('product_id');
+
+    //     return response()->json([
+    //         'favoriteProductIds' => $favoriteProductIds
+    //     ]);
+    // }
+
     public function getAllFavorites()
     {
         $user = Auth::user();
 
-        $favoriteProductIds = Favorite::where('user_id', $user->id)
-            ->pluck('product_id');
+        $favoriteProducts = Favorite::where('user_id', $user->id)
+            ->with('product') // pastikan relasi favorite->product ada
+            ->get()
+            ->pluck('product');
 
         return response()->json([
-            'favoriteProductIds' => $favoriteProductIds
+            'favorites' => $favoriteProducts
         ]);
     }
 }

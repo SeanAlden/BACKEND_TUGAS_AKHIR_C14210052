@@ -19,61 +19,6 @@ class CartController extends Controller
     // public function addToCart(Request $request)
     // {
     //     $request->validate([
-    //         'user_id' => 'required|exists:users,id',
-    //         'product_id' => 'required|exists:products,id',
-    //         'shipping_method' => 'nullable|in:Reguler,Express,Ambil di tempat',
-    //         'payment_method' => 'nullable|in:Cash,Bank Transfer,OVO,Dana,COD',
-    //         'quantities' => 'required|array',
-    //         'quantities.*' => 'integer|min:1'
-    //     ]);
-
-    //     $product = Product::find($request->product_id);
-    //     $shippingMethod = $request->shipping_method ?? 'Reguler';
-    //     $paymentMethod = $request->payment_method ?? 'Cash';
-
-    //     $shippingFee = match ($shippingMethod) {
-    //         'Express' => 3500,
-    //         'Reguler' => 1750,
-    //         default => 0,
-    //     };
-
-    //     foreach ($request->quantities as $exp_date => $quantity) {
-    //         $existingCart = Cart::where('user_id', $request->user_id)
-    //             ->where('product_id', $request->product_id)
-    //             ->where('exp_date', $exp_date)
-    //             ->first();
-
-    //         $baseTotal = $product->price * $quantity;
-    //         $totalWithShipping = $baseTotal + $shippingFee;
-
-    //         if ($existingCart) {
-    //             $existingCart->quantity += $quantity;
-    //             $existingCart->gross_amount += $totalWithShipping;
-    //             $existingCart->shipping_method = $shippingMethod;
-    //             $existingCart->payment_method = $paymentMethod;
-    //             $existingCart->save();
-    //         } else {
-    //             Cart::create([
-    //                 'user_id' => $request->user_id,
-    //                 'product_id' => $request->product_id,
-    //                 'exp_date' => $exp_date,
-    //                 'quantity' => $quantity,
-    //                 'gross_amount' => $totalWithShipping,
-    //                 'shipping_method' => $shippingMethod,
-    //                 'payment_method' => $paymentMethod,
-    //             ]);
-    //         }
-    //     }
-
-    //     return response()->json([
-    //         'success' => true,
-    //         'message' => 'Produk berhasil ditambahkan ke keranjang'
-    //     ], 200);
-    // }
-
-    // public function addToCart(Request $request)
-    // {
-    //     $request->validate([
     //         'product_id' => 'required|exists:products,id',
     //         'shipping_method' => 'nullable|in:Reguler,Express,Ambil di tempat',
     //         'payment_method' => 'nullable|in:Cash,Bank Transfer,OVO,Dana,COD',
@@ -83,14 +28,15 @@ class CartController extends Controller
 
     //     $userId = Auth::id();
     //     $product = Product::find($request->product_id);
-    //     $shippingMethod = $request->shipping_method ?? 'Ambil di tempat';
-    //     $paymentMethod = $request->payment_method ?? 'Cash';
 
-    //     // $shippingFee = match ($shippingMethod) {
-    //     //     'Express' => 3500,
-    //     //     'Reguler' => 1750,
-    //     //     default => 0,
-    //     // };
+    //     // Ambil shipping dan payment method dari item cart pertama user (jika ada)
+    //     $existingCartItem = Cart::where('user_id', $userId)->first();
+
+    //     $shippingMethod = $request->shipping_method
+    //         ?? ($existingCartItem ? $existingCartItem->shipping_method : 'Ambil di tempat');
+
+    //     $paymentMethod = $request->payment_method
+    //         ?? ($existingCartItem ? $existingCartItem->payment_method : 'Cash');
 
     //     foreach ($request->quantities as $exp_date => $quantity) {
     //         $existingCart = Cart::where('user_id', $userId)
@@ -99,7 +45,6 @@ class CartController extends Controller
     //             ->first();
 
     //         $baseTotal = $product->price * $quantity;
-    //         // $totalWithShipping = $baseTotal + $shippingFee;
     //         $totalWithShipping = $baseTotal;
 
     //         if ($existingCart) {
@@ -142,38 +87,42 @@ class CartController extends Controller
 
         // Ambil shipping dan payment method dari item cart pertama user (jika ada)
         $existingCartItem = Cart::where('user_id', $userId)->first();
+        $shippingMethod = $request->shipping_method ?? ($existingCartItem ? $existingCartItem->shipping_method : 'Ambil di tempat');
+        $paymentMethod = $request->payment_method ?? ($existingCartItem ? $existingCartItem->payment_method : 'Cash');
 
-        $shippingMethod = $request->shipping_method
-            ?? ($existingCartItem ? $existingCartItem->shipping_method : 'Ambil di tempat');
+        // Ambil semua exp_date dari product_stocks untuk produk ini
+        $productStocks = ProductStock::where('product_id', $request->product_id)->get();
 
-        $paymentMethod = $request->payment_method
-            ?? ($existingCartItem ? $existingCartItem->payment_method : 'Cash');
+        foreach ($productStocks as $stock) {
+            $exp_date = $stock->exp_date;
+            $quantity = $request->quantities[$exp_date] ?? 0; // Ambil quantity dari request atau 0 jika tidak ada
 
-        foreach ($request->quantities as $exp_date => $quantity) {
-            $existingCart = Cart::where('user_id', $userId)
-                ->where('product_id', $request->product_id)
-                ->where('exp_date', $exp_date)
-                ->first();
+            if ($quantity >= 0) { // Hanya tambahkan jika quantity lebih dari 0
+                $existingCart = Cart::where('user_id', $userId)
+                    ->where('product_id', $request->product_id)
+                    ->where('exp_date', $exp_date)
+                    ->first();
 
-            $baseTotal = $product->price * $quantity;
-            $totalWithShipping = $baseTotal;
+                $baseTotal = $product->price * $quantity;
+                $totalWithShipping = $baseTotal;
 
-            if ($existingCart) {
-                $existingCart->quantity += $quantity;
-                $existingCart->gross_amount += $totalWithShipping;
-                $existingCart->shipping_method = $shippingMethod;
-                $existingCart->payment_method = $paymentMethod;
-                $existingCart->save();
-            } else {
-                Cart::create([
-                    'user_id' => $userId,
-                    'product_id' => $request->product_id,
-                    'exp_date' => $exp_date,
-                    'quantity' => $quantity,
-                    'gross_amount' => $totalWithShipping,
-                    'shipping_method' => $shippingMethod,
-                    'payment_method' => $paymentMethod,
-                ]);
+                if ($existingCart) {
+                    $existingCart->quantity += $quantity;
+                    $existingCart->gross_amount += $totalWithShipping;
+                    $existingCart->shipping_method = $shippingMethod;
+                    $existingCart->payment_method = $paymentMethod;
+                    $existingCart->save();
+                } else {
+                    Cart::create([
+                        'user_id' => $userId,
+                        'product_id' => $request->product_id,
+                        'exp_date' => $exp_date,
+                        'quantity' => $quantity,
+                        'gross_amount' => $totalWithShipping,
+                        'shipping_method' => $shippingMethod,
+                        'payment_method' => $paymentMethod,
+                    ]);
+                }
             }
         }
 
@@ -183,37 +132,10 @@ class CartController extends Controller
         ], 200);
     }
 
-
-    // public function updateCart(Request $request, $id)
-    // {
-    //     $request->validate([
-    //         'quantity' => 'required|integer|min:1',
-    //     ]);
-
-    //     $cart = Cart::findOrFail($id);
-    //     $shippingFee = match ($cart->shipping_method) {
-    //         'Express' => 3500,
-    //         'Reguler' => 1750,
-    //         default => 0,
-    //     };
-
-    //     $cart->quantity = $request->quantity;
-    //     $cart->gross_amount = ($cart->product->price * $request->quantity) + $shippingFee;
-    //     $cart->save();
-
-    //     return response()->json(['success' => true, 'cart' => $cart], 200);
-    // }
-
-    // public function deleteCart($id)
-    // {
-    //     Cart::destroy($id);
-    //     return response()->json(['success' => true, 'message' => 'Item removed from cart'], 200);
-    // }
-
     public function updateCart(Request $request, $id)
     {
         $request->validate([
-            'quantity' => 'required|integer|min:1',
+            'quantity' => 'required|integer|min:0',
         ]);
 
         $cart = Cart::findOrFail($id);
@@ -222,30 +144,44 @@ class CartController extends Controller
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        // $shippingFee = match ($cart->shipping_method) {
-        //     'Express' => 3500,
-        //     'Reguler' => 1750,
-        //     default => 0,
-        // };
-
         $cart->quantity = $request->quantity;
-        // $cart->gross_amount = ($cart->product->price * $request->quantity) + $shippingFee;
         $cart->gross_amount = ($cart->product->price * $request->quantity);
         $cart->save();
 
         return response()->json(['success' => true, 'cart' => $cart], 200);
     }
 
-    public function deleteCart($id)
-    {
-        $cart = Cart::findOrFail($id);
+    // public function deleteCart($id)
+    // {
+    //     $cart = Cart::findOrFail($id);
 
-        if ($cart->user_id !== Auth::id()) {
-            return response()->json(['error' => 'Unauthorized'], 403);
+    //     if ($cart->user_id !== Auth::id()) {
+    //         return response()->json(['error' => 'Unauthorized'], 403);
+    //     }
+
+    //     $cart->delete();
+    //     return response()->json(['success' => true, 'message' => 'Item removed from cart'], 200);
+    // }
+
+    public function deleteCart($productId)
+    {
+        $userId = Auth::id();
+
+        // Ambil semua entri cart milik user untuk produk tertentu
+        $cartItems = Cart::where('user_id', $userId)
+            ->where('product_id', $productId)
+            ->get();
+
+        if ($cartItems->isEmpty()) {
+            return response()->json(['error' => 'Item tidak ditemukan'], 404);
         }
 
-        $cart->delete();
-        return response()->json(['success' => true, 'message' => 'Item removed from cart'], 200);
+        // Hapus semua entri
+        foreach ($cartItems as $cart) {
+            $cart->delete();
+        }
+
+        return response()->json(['success' => true, 'message' => 'Item berhasil dihapus berdasarkan product_id'], 200);
     }
 
     public function checkout()
@@ -280,6 +216,7 @@ class CartController extends Controller
 
             // Tentukan status berdasarkan shipping method
             $initialStatus = ($shippingMethod === 'Ambil di tempat') ? 'Pesanan selesai' : 'Dalam pengemasan';
+            $is_final = ($shippingMethod === 'Ambil di tempat') ? 'Sudah selesai' : 'Belum selesai';
 
             $transaction = Transaction::create([
                 'transaction_code' => $transactionCode,
@@ -292,6 +229,7 @@ class CartController extends Controller
                 'status' => $initialStatus, // status awal default
                 'user_id' => $userId,
                 'transaction_date' => now(),
+                'is_final' => $is_final
             ]);
 
             TransactionStatusHistory::create([
@@ -351,90 +289,6 @@ class CartController extends Controller
             ], 500);
         }
     }
-
-    // public function show()
-    // {
-    //     $cartItems = Cart::with('product')->get()->groupBy(function ($item) {
-    //         return $item->product_id . '_' . $item->exp_date;
-    //     });
-
-    //     $shippingMethods = ['Reguler', 'Express', 'Ambil di tempat'];
-    //     $paymentMethods = ['Cash', 'Bank Transfer', 'OVO', 'Dana', 'COD'];
-
-    //     $mergedCart = $cartItems->map(function ($groupedItems) {
-    //         $userId = Auth::id();
-    //         $firstItem = $groupedItems->first();
-    //         $stock = ProductStock::where('product_id', $firstItem->product_id)
-    //             ->where('exp_date', $firstItem->exp_date)
-    //             ->value('stock') ?? 0;
-
-    //         return [
-    //             'id' => $firstItem->id,
-    //             'user_id' => $userId,
-    //             'product_id' => $firstItem->product_id,
-    //             'product_name' => $firstItem->product->name,
-    //             'product_image' => $firstItem->product->photo,
-    //             'product_price' => $firstItem->product->price,
-    //             'expired_date' => $firstItem->exp_date,
-    //             'quantity' => $groupedItems->sum('quantity'),
-    //             'gross_amount' => $groupedItems->sum('gross_amount'),
-    //             'shipping_method' => $firstItem->shipping_method,
-    //             'payment_method' => $firstItem->payment_method,
-    //             'stock' => $stock,
-    //         ];
-    //     })->values();
-
-    //     return response()->json([
-    //         'success' => true,
-    //         'cart' => $mergedCart,
-    //         'shipping_methods' => $shippingMethods,
-    //         'payment_methods' => $paymentMethods,
-    //     ], 200);
-    // }
-
-    // public function show()
-    // {
-    //     $userId = Auth::id(); // ambil ID user yang sedang login
-
-    //     $cartItems = Cart::with('product')
-    //         ->where('user_id', $userId) // filter berdasarkan user login
-    //         ->get()
-    //         ->groupBy(function ($item) {
-    //             return $item->product_id . '_' . $item->exp_date;
-    //         });
-
-    //     $shippingMethods = ['Reguler', 'Express', 'Ambil di tempat'];
-    //     $paymentMethods = ['Cash', 'Bank Transfer', 'OVO', 'Dana', 'COD'];
-
-    //     $mergedCart = $cartItems->map(function ($groupedItems) use ($userId) {
-    //         $firstItem = $groupedItems->first();
-    //         $stock = ProductStock::where('product_id', $firstItem->product_id)
-    //             ->where('exp_date', $firstItem->exp_date)
-    //             ->value('stock') ?? 0;
-
-    //         return [
-    //             'id' => $firstItem->id,
-    //             'user_id' => $userId,
-    //             'product_id' => $firstItem->product_id,
-    //             'product_name' => $firstItem->product->name,
-    //             'product_image' => $firstItem->product->photo,
-    //             'product_price' => $firstItem->product->price,
-    //             'expired_date' => $firstItem->exp_date,
-    //             'quantity' => $groupedItems->sum('quantity'),
-    //             'gross_amount' => $groupedItems->sum('gross_amount'),
-    //             'shipping_method' => $firstItem->shipping_method,
-    //             'payment_method' => $firstItem->payment_method,
-    //             'stock' => $stock,
-    //         ];
-    //     })->values();
-
-    //     return response()->json([
-    //         'success' => true,
-    //         'cart' => $mergedCart,
-    //         'shipping_methods' => $shippingMethods,
-    //         'payment_methods' => $paymentMethods,
-    //     ], 200);
-    // }
 
     public function show()
     {
@@ -498,44 +352,6 @@ class CartController extends Controller
             'product_exp_dates' => $productExpDateStock, // tambahan baru
         ], 200);
     }
-
-    // public function show()
-    // {
-    //     $userId = Auth::id();
-
-    //     $carts = Cart::with(['product', 'details.productStock'])->where('user_id', $userId)->get();
-
-    //     $cartData = $carts->map(function ($cart) {
-    //         return [
-    //             'id' => $cart->id,
-    //             'product_name' => $cart->product->name,
-    //             'product_image' => $cart->product->photo,
-    //             'product_price' => $cart->product->price,
-    //             'shipping_method' => $cart->shipping_method,
-    //             'payment_method' => $cart->payment_method,
-    //             'gross_amount' => $cart->gross_amount,
-    //             'details' => $cart->details->map(function ($detail) {
-    //                 return [
-    //                     'cart_detail_id' => $detail->id,
-    //                     'exp_date' => $detail->productStock->exp_date,
-    //                     'quantity' => $detail->quantity,
-    //                     'stock' => $detail->productStock->stock,
-    //                     'gross_amount' => $detail->gross_amount,
-    //                 ];
-    //             }),
-    //         ];
-    //     });
-
-    //     $shippingMethods = ['Reguler', 'Express', 'Ambil di tempat'];
-    //     $paymentMethods = ['Cash', 'Bank Transfer', 'OVO', 'Dana', 'COD'];
-
-    //     return response()->json([
-    //         'success' => true,
-    //         'cart' => $cartData,
-    //         'shipping_methods' => $shippingMethods,
-    //         'payment_methods' => $paymentMethods,
-    //     ]);
-    // }
 
     public function updateField(Request $request)
     {

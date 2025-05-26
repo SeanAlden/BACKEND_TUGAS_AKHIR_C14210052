@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Database\Migrations\Migration;
 
 return new class extends Migration
 {
@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::table('users', function (Blueprint $table) {
             $table->string('phone')->after('email');
             $table->string('profile_image')->nullable()->after('phone');
-            $table->enum('usertype', ['admin', 'cashier'])->default('cashier')->after('profile_image');
+            $table->enum('usertype', ['admin', 'employee'])->default('employee')->after('profile_image');
         });
     }
 

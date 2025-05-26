@@ -812,7 +812,7 @@ class AnalysisController extends Controller
         ));
     }
 
-    public function results()
+    public function countAccuracy()
     {
         $transactions = Transaction::with('details.product')->get();
         if ($transactions->isEmpty()) {
@@ -902,7 +902,7 @@ class AnalysisController extends Controller
         $highAccuracyNotifications = [];
 
         foreach ($accuracy as $productId => $accValue) {
-            if ($accValue > 75) {
+            if ($accValue > 85) {
                 $product = Product::find($productId);
                 if ($product) {
                     $message = "{$product->name} berpeluang {$accValue}% menjadi produk terlaris.";
@@ -921,7 +921,8 @@ class AnalysisController extends Controller
                     if (!$existing) {
                         Notification::create([
                             'message' => $message,
-                            'notification_type' => 'Produk Terlaris'
+                            'notification_type' => 'Produk Terlaris',
+                            'notification_time' => now()
                         ]);
                         $highAccuracyNotifications[] = $message;
                     }
@@ -1011,6 +1012,268 @@ class AnalysisController extends Controller
         }
         return $tree;
     }
+
+    //=====================================================================================
+    //=====================================================================================
+    //=====================================================================================
+
+    // public function getTransactions()
+    // {
+    //     $transactions = $this->getAllTransactionsWithDetails();
+    //     return response()->json(['transactions' => $transactions]);
+    // }
+
+    // private function getAllTransactionsWithDetails()
+    // {
+    //     return Transaction::with('details.product')->get();
+    // }
+
+    // public function countAttributes()
+    // {
+    //     $transactions = $this->getAllTransactionsWithDetails();
+    //     $tMax = Carbon::parse(Transaction::max('transaction_date'));
+
+    //     $lambda = 0.005;
+    //     [$weightedSales, $firstDates, $lastDates, $diffDaysMap, $weightsMap] = $this->calculateWeightedSales($transactions, $lambda, $tMax);
+
+    //     // Simpan ke database
+    //     $this->storeSalesCount($weightedSales, $firstDates, $lastDates, $tMax);
+
+    //     $products = $this->getProductMetadata(array_keys($weightedSales));
+
+    //     return response()->json([
+    //         'Tmax' => $tMax,
+    //         'weightedSales' => $weightedSales,
+    //         'products' => $products,
+    //         'firstTransactionDates' => $firstDates,
+    //         'lastTransactionDates' => $lastDates,
+    //         'productDateDifferences' => $diffDaysMap,
+    //         'productTimeWeights' => $weightsMap,
+    //     ]);
+    // }
+
+    // public function countAccuracy()
+    // {
+    //     $transactions = $this->getAllTransactionsWithDetails();
+    //     if ($transactions->isEmpty()) {
+    //         return response()->json(['message' => 'Tidak ada prediksi karena tidak ada data transaksi.']);
+    //     }
+
+    //     $tMax = Carbon::parse(Transaction::max('transaction_date'));
+    //     $lambda = 0.007;
+
+    //     [$weightedSales] = $this->calculateWeightedSales($transactions, $lambda, $tMax);
+
+    //     // Normalisasi dan hitung entropy
+    //     [$accuracy, $entropyValues, $gainValues] = $this->calculateEntropyGain($weightedSales, $tMax);
+
+    //     // Simpan notifikasi
+    //     $highAccuracyNotifications = [];
+    //     foreach ($accuracy as $productId => $accValue) {
+    //         if ($accValue > 85) {
+    //             $product = Product::find($productId);
+    //             if ($product) {
+    //                 $message = "{$product->name} berpeluang {$accValue}% menjadi produk terlaris.";
+    //                 $existing = Notification::where('message', $message)->first();
+
+    //                 if (!$existing) {
+    //                     Notification::create([
+    //                         'message' => $message,
+    //                         'notification_type' => 'Produk Terlaris',
+    //                         'notification_time' => now()
+    //                     ]);
+    //                     $highAccuracyNotifications[] = $message;
+    //                 }
+    //             }
+    //         }
+    //     }
+
+    //     $products = $this->getProductMetadata(array_keys($weightedSales));
+
+    //     $decisionTree = $this->buildDecisionTree($gainValues, $accuracy, $products);
+
+    //     return response()->json(compact(
+    //         'accuracy',
+    //         'products',
+    //         'entropyValues',
+    //         'gainValues',
+    //         'decisionTree',
+    //         'highAccuracyNotifications'
+    //     ));
+    // }
+    // private function calculateWeightedSales($transactions, $lambda, $tMax)
+    // {
+    //     $weightedSales = [];
+    //     $firstDates = [];
+    //     $lastDates = [];
+    //     $diffDaysMap = [];
+    //     $weightsMap = [];
+
+    //     foreach ($transactions as $transaction) {
+    //         $t = Carbon::parse($transaction->transaction_date);
+    //         $diff = $t->diffInDays($tMax);
+    //         $weight = exp(-$lambda * $diff);
+
+    //         foreach ($transaction->details as $detail) {
+    //             $productId = $detail->product->id;
+    //             $quantity = $detail->quantity;
+
+    //             $firstDates[$productId] = $firstDates[$productId] ?? $t;
+    //             $lastDates[$productId] = $lastDates[$productId] ?? $t;
+
+    //             if ($t->lt($firstDates[$productId]))
+    //                 $firstDates[$productId] = $t;
+    //             if ($t->gt($lastDates[$productId]))
+    //                 $lastDates[$productId] = $t;
+
+    //             if (!isset($weightedSales[$productId])) {
+    //                 $weightedSales[$productId] = ['raw' => 0, 'weighted' => 0];
+    //             }
+
+    //             $weightedSales[$productId]['raw'] += $quantity;
+    //             $weightedSales[$productId]['weighted'] += $quantity * $weight;
+    //         }
+    //     }
+
+    //     foreach ($weightedSales as $productId => &$sales) {
+    //         $diffDays = $firstDates[$productId]->diffInDays($lastDates[$productId]);
+    //         $timeWeight = log(1 + max($diffDays, 1));
+    //         $sales['weighted'] *= $timeWeight;
+
+    //         $diffDaysMap[$productId] = $diffDays;
+    //         $weightsMap[$productId] = round($timeWeight, 4);
+    //     }
+
+    //     return [$weightedSales, $firstDates, $lastDates, $diffDaysMap, $weightsMap];
+    // }
+    // private function storeSalesCount(array $weightedSales, array $firstDates, array $lastDates, $tMax)
+    // {
+    //     foreach ($weightedSales as $productId => $sales) {
+    //         $product = Product::find($productId);
+    //         if (!$product)
+    //             continue;
+
+    //         SalesCount::updateOrCreate(
+    //             ['product_id' => $productId],
+    //             [
+    //                 'product_name' => $product->name,
+    //                 'raw_sales' => $sales['raw'],
+    //                 'weighted_sales' => $sales['weighted'],
+    //                 'first_transaction_date' => $firstDates[$productId],
+    //                 'last_transaction_date' => $lastDates[$productId],
+    //                 'tmax' => $tMax
+    //             ]
+    //         );
+    //     }
+    // }
+    // private function calculateEntropyGain(array $weightedSales, $tMax)
+    // {
+    //     $weightedOnly = array_column($weightedSales, 'weighted');
+    //     $total = array_sum($weightedOnly);
+    //     if ($total == 0)
+    //         $total = 1;
+
+    //     $normalized = [];
+    //     foreach ($weightedSales as $productId => $data) {
+    //         $normalized[$productId] = $data['weighted'] / $total;
+    //     }
+
+    //     $entropyValues = [];
+    //     $gainValues = [];
+    //     $accuracy = [];
+
+    //     $baseEntropy = 0;
+    //     foreach ($normalized as $prob) {
+    //         if ($prob > 0)
+    //             $baseEntropy -= $prob * log($prob, 2);
+    //     }
+
+    //     foreach ($normalized as $productId => $prob) {
+    //         $entropy = $prob > 0 ? -$prob * log($prob, 2) : 0;
+    //         $gain = $baseEntropy - $entropy;
+
+    //         $entropyValues[$productId] = round($entropy, 4);
+    //         $gainValues[$productId] = round($gain, 4);
+
+    //         $accuracy[$productId] = round($prob * 100, 2);
+    //     }
+
+    //     return [$accuracy, $entropyValues, $gainValues];
+    // }
+    // private function getProductMetadata(array $productIds)
+    // {
+    //     return Product::whereIn('id', $productIds)->get(['id', 'name', 'price']);
+    // }
+
+    // private function buildDecisionTree($gainValues, $accuracy, $products)
+    // {
+    //     if (empty($gainValues)) {
+    //         return "Tidak ada decision tree.";
+    //     }
+
+    //     $bestAttribute = array_keys($gainValues, max($gainValues))[0];
+    //     $tree = "Root Node: $bestAttribute\n";
+
+    //     foreach ($accuracy as $productId => $acc) {
+    //         $product = $products[$productId] ?? null;
+    //         if (!$product)
+    //             continue;
+
+    //         $productName = $product['name'];
+    //         $priceCategory = match (true) {
+    //             $product['price'] > 200000 => 'tinggi',
+    //             $product['price'] >= 100000 => 'sedang',
+    //             default => 'rendah',
+    //         };
+
+    //         $stockCategory = match (true) {
+    //             $product['stocks'] > 100 => 'tinggi',
+    //             $product['stocks'] >= 20 => 'sedang',
+    //             default => 'rendah',
+    //         };
+
+    //         $accuracyCategory = match (true) {
+    //             $acc >= 85 => 'tinggi',
+    //             $acc >= 60 => 'sedang',
+    //             default => 'rendah',
+    //         };
+
+    //         $tree .= "|-- *$productName*
+    // |---Akurasi: $accuracyCategory ($acc%)
+    // |---Harga: $priceCategory
+    // |---Stok: $stockCategory\n";
+
+    //         if ($accuracyCategory == "tinggi") {
+    //             $tree .= "              ├─ Kondisi: Produk ini sangat menguntungkan! Optimalkan pemasaran & atur stok.\n";
+    //         } elseif ($accuracyCategory == "sedang") {
+    //             $tree .= "              ├─ Kondisi: Perlu strategi pemasaran lebih agresif.\n";
+    //         } else {
+    //             $tree .= "              ├─ Kondisi: Tidak laku dan stok berlebih. Evaluasi apakah perlu dihentikan atau diskon besar.\n";
+    //         }
+
+    //         $recommendation = match ($accuracyCategory) {
+    //             'tinggi' => "Produk ini sangat menguntungkan! Optimalkan pemasaran & atur stok.",
+    //             'sedang' => "Perlu strategi pemasaran lebih agresif.",
+    //             default => "Tidak laku dan stok berlebih. Evaluasi apakah perlu dihentikan atau diskon besar.",
+    //         };
+
+    //         DecisionTree::updateOrCreate(
+    //             ['product_id' => $productId],
+    //             [
+    //                 'accuracy_category' => $accuracyCategory,
+    //                 'price_category' => $priceCategory,
+    //                 'stock_category' => $stockCategory,
+    //                 'recommendation' => $recommendation
+    //             ]
+    //         );
+
+    //         AccuracyPrediction::updateOrCreate(
+    //             ['product_id' => $productId],
+    //             ['accuracy_percentage' => round($acc, 2)]
+    //         );
+    //     }
+    //     return $tree;
+    // }
 }
 
 

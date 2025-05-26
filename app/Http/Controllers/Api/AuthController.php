@@ -44,7 +44,7 @@ class AuthController extends Controller
             'email' => $request->email,
             'phone' => $request->phone,
             'password' => Hash::make($request->password),
-            'usertype' => 'cashier', // default value
+            'usertype' => 'employee', // default value
         ]);
 
         return response()->json([
@@ -127,9 +127,9 @@ class AuthController extends Controller
 
     public function updateProfile(Request $request)
     {
-        /**
-         * @var \App\Models\User $user
-         */
+        // /**
+        //  * @var \App\Models\User $user
+        //  */
         $user = Auth::user();
 
         $request->validate([
@@ -153,9 +153,9 @@ class AuthController extends Controller
 
     public function updatePassword(Request $request)
     {
-        /**
-         * @var \App\Models\User $user
-         */
+        // /**
+        //  * @var \App\Models\User $user
+        //  */
         $user = Auth::user();
 
         $request->validate([
@@ -259,7 +259,7 @@ class AuthController extends Controller
     }
 
     // Step 1: Kirim kode verifikasi ke email
-    public function sendResetCode(Request $request)
+    public function getVerificationCode(Request $request)
     {
         $request->validate([
             'email' => 'required|email|exists:users,email'
@@ -278,14 +278,14 @@ class AuthController extends Controller
         // Kirim email ke user (simulasi)
         Mail::raw("Your reset code is: $code", function ($message) use ($request) {
             $message->to($request->email)
-                    ->subject('Password Reset Code');
+                ->subject('Password Reset Code');
         });
 
         return response()->json(['message' => 'Reset code sent to email.']);
     }
 
     // Step 2: Verifikasi kode dari user
-    public function verifyResetCode(Request $request)
+    public function validateVerificationCode(Request $request)
     {
         $request->validate([
             'email' => 'required|email',

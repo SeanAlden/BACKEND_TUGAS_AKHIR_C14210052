@@ -144,11 +144,79 @@ class DashboardController extends Controller
 //         ]);
 //     }
 
+    // public function index(Request $request)
+    // {
+    //     $monthName = $request->input('month', Carbon::now()->locale('id')->translatedFormat('F')); // default: bulan ini dalam format "Mei"
+
+    //     // Mapping nama bulan Indonesia ke angka
+    //     $bulanMap = [
+    //         'Januari' => 1,
+    //         'Februari' => 2,
+    //         'Maret' => 3,
+    //         'April' => 4,
+    //         'Mei' => 5,
+    //         'Juni' => 6,
+    //         'Juli' => 7,
+    //         'Agustus' => 8,
+    //         'September' => 9,
+    //         'Oktober' => 10,
+    //         'November' => 11,
+    //         'Desember' => 12,
+    //     ];
+
+    //     $monthNumber = $bulanMap[$monthName] ?? null;
+    //     if (!$monthNumber) {
+    //         return response()->json(['error' => 'Bulan tidak valid.'], 400);
+    //     }
+
+    //     $year = Carbon::now()->year;
+    //     $startDate = Carbon::createFromDate($year, $monthNumber, 1)->startOfMonth();
+    //     $endDate = Carbon::createFromDate($year, $monthNumber, 1)->endOfMonth();
+
+    //     // Total pendapatan dan transaksi bulan terpilih
+    //     $totalRevenue = Transaction::whereBetween('transaction_date', [$startDate, $endDate])->sum('total_payment');
+    //     $totalTransactions = Transaction::whereBetween('transaction_date', [$startDate, $endDate])->count();
+
+    //     // Total produk
+    //     $totalProducts = Product::count();
+
+    //     // Top produk (semua data)
+    //     $topProducts = TransactionDetail::join('products', 'transaction_details.product_id', '=', 'products.id')
+    //         ->join('categories', 'products.category_id', '=', 'categories.id')
+    //         ->select(
+    //             'products.id',
+    //             'products.name',
+    //             'products.price',
+    //             'products.photo',
+    //             'categories.name as category_name',
+    //             FacadesDB::raw('SUM(transaction_details.quantity) as total_sold')
+    //         )
+    //         ->groupBy('products.id', 'products.name', 'categories.name', 'products.price', 'products.photo')
+    //         ->orderByDesc('total_sold')
+    //         ->limit(3)
+    //         ->get();
+
+    //     // Grafik penjualan (8 bulan terakhir)
+    //     $salesByMonth = Transaction::whereBetween('transaction_date', [Carbon::now()->subMonths(8), Carbon::now()])
+    //         ->selectRaw('DATE_FORMAT(transaction_date, "%Y-%m") as month, SUM(gross_amount) as revenue')
+    //         ->groupBy('month')
+    //         ->orderBy('month')
+    //         ->get();
+
+    //     return response()->json([
+    //         'total_revenue' => $totalRevenue,
+    //         'total_transactions' => $totalTransactions,
+    //         'total_products' => $totalProducts,
+    //         'top_products' => $topProducts,
+    //         'sales_by_month' => $salesByMonth,
+    //         'selected_month' => $monthName,
+    //     ]);
+    // }
     public function index(Request $request)
     {
-        $monthName = $request->input('month', Carbon::now()->locale('id')->translatedFormat('F')); // default: bulan ini dalam format "Mei"
+        $monthName = $request->input('month', Carbon::now()->locale('id')->translatedFormat('F'));
+        $year = $request->input('year', Carbon::now()->year); // Ambil tahun dari request
 
-        // Mapping nama bulan Indonesia ke angka
         $bulanMap = [
             'Januari' => 1,
             'Februari' => 2,
@@ -169,18 +237,16 @@ class DashboardController extends Controller
             return response()->json(['error' => 'Bulan tidak valid.'], 400);
         }
 
-        $year = Carbon::now()->year;
+        // Gunakan tahun dari input
         $startDate = Carbon::createFromDate($year, $monthNumber, 1)->startOfMonth();
         $endDate = Carbon::createFromDate($year, $monthNumber, 1)->endOfMonth();
 
-        // Total pendapatan dan transaksi bulan terpilih
+        // Total pendapatan dan transaksi bulan + tahun terpilih
         $totalRevenue = Transaction::whereBetween('transaction_date', [$startDate, $endDate])->sum('total_payment');
         $totalTransactions = Transaction::whereBetween('transaction_date', [$startDate, $endDate])->count();
 
-        // Total produk
         $totalProducts = Product::count();
 
-        // Top produk (semua data)
         $topProducts = TransactionDetail::join('products', 'transaction_details.product_id', '=', 'products.id')
             ->join('categories', 'products.category_id', '=', 'categories.id')
             ->select(
@@ -196,7 +262,7 @@ class DashboardController extends Controller
             ->limit(3)
             ->get();
 
-        // Grafik penjualan (8 bulan terakhir)
+        // Grafik penjualan (8 bulan terakhir dari current date)
         $salesByMonth = Transaction::whereBetween('transaction_date', [Carbon::now()->subMonths(8), Carbon::now()])
             ->selectRaw('DATE_FORMAT(transaction_date, "%Y-%m") as month, SUM(gross_amount) as revenue')
             ->groupBy('month')
@@ -210,6 +276,7 @@ class DashboardController extends Controller
             'top_products' => $topProducts,
             'sales_by_month' => $salesByMonth,
             'selected_month' => $monthName,
+            'selected_year' => (int) $year,
         ]);
     }
 }

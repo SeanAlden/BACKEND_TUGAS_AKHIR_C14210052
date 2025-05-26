@@ -44,11 +44,15 @@ class Cart extends Model
         return $this->belongsTo(User::class);
     }
 
-    // Cart.php
+    // // Cart.php
+    // public function productStock()
+    // {
+    //     return $this->hasOne(ProductStock::class, 'product_id', 'product_id')
+    //         ->whereColumn('exp_date', 'carts.exp_date');
+    // }
     public function productStock()
     {
-        return $this->hasOne(ProductStock::class, 'product_id', 'product_id')
-            ->whereColumn('exp_date', 'carts.exp_date');
+        return $this->hasMany(ProductStock::class, 'product_id', 'product_id');
     }
 }
 

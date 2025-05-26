@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
 use App\Models\ExitProduct;
 use App\Models\ProductStock;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\Controller;
 
 class ExitProductController extends Controller
 {
@@ -140,17 +140,17 @@ class ExitProductController extends Controller
         //     return response()->json(['success' => false, 'message' => 'Stok tidak mencukupi (stok saat ini 10 atau kurang)'], 400);
         // }
 
-        // Cek apakah pengurangan akan menyebabkan stok dibawah 10
-        // if ($productStock->stock - $request->removed_stock < 10) {
-        //     return response()->json(['success' => false, 'message' => 'Pengurangan stok tidak dapat dilakukan karena akan menyebabkan stok dibawah 10'], 400);
-        // }
+        // // Cek apakah pengurangan akan menyebabkan stok dibawah 0 atau minus
+        if ($productStock->stock - $request->removed_stock < 0) {
+            return response()->json(['success' => false, 'message' => 'Pengurangan stok tidak dapat dilakukan karena akan menyebabkan jumlah stok dibawah 0'], 400);
+        }
 
         // Simpan stok sebelum perubahan
         $previousStock = $productStock->stock;
-
+        
         // Kurangi stok
         $productStock->decrement('stock', $request->removed_stock);
-
+        
         // Simpan stok setelah perubahan
         $currentStock = $previousStock - $request->removed_stock;
 
@@ -342,9 +342,9 @@ class ExitProductController extends Controller
         // }
 
         // Cek apakah pengurangan akan menyebabkan stok negatif atau 0
-        // if ($productStock->stock - $request->removed_stock <= 10) {
-        //     return response()->json(['success' => false, 'message' => 'Pengurangan stok tidak dapat dilakukan karena akan menyebabkan stok dibawah 10'], 400);
-        // }
+        if ($productStock->stock - $request->removed_stock < 0) {
+            return response()->json(['success' => false, 'message' => 'Pengurangan stok tidak dapat dilakukan karena akan menyebabkan stok dibawah 0'], 400);
+        }
 
         // Simpan stok sebelum perubahan
         $previousStock = $productStock->stock;
