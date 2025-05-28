@@ -8,47 +8,39 @@ use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\API\AnalysisController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\EmployeeController;
-use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\ExitProductController;
 use App\Http\Controllers\Api\TransactionController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\EntryProductController;
 
-// Route::get('/user', function (Request $request) {
-//     \Log::info('User accessed', ['user' => $request->user()]);
-//     return $request->user();
-// })->middleware('auth:sanctum');
-
-Route::get('/user', function (Request $request) {
-    \Log::info('User accessed', ['user' => $request->user()]);
+Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
     return $request->user();
-})->middleware('auth:sanctum');
+});
 
-Route::get('/products', [ProductController::class, 'index']);
-Route::get('/active/products', [ProductController::class, 'indexActiveProduct']);
-Route::post('/products', [ProductController::class, 'store']);
-Route::get('/products/{id}', [ProductController::class, 'show']);
-Route::get('/products/category/{id}', [ProductController::class, 'showByCategory']);
-Route::get('/active/products/category/{id}', [ProductController::class, 'showByCategoryActiveProduct']);
-Route::post('/products/{id}', [ProductController::class, 'update']);
-// Route::delete('/products/{id}', [ProductController::class, 'destroy']);
-Route::put('/updateCondition/products/{id}', [ProductController::class, 'updateCondition']);
-Route::get('/product/{id}/exp-dates', [ProductController::class, 'getExpDates']);
-// Route::get('/product/{product_id}/total-stock', [ProductController::class, 'getTotalStock']);
-// Route::get('/product/{product_id}/stock/{exp_date}', [ProductController::class, 'getStockByDate']);
+Route::prefix('products')->group(function () {
+    Route::get('/', [ProductController::class, 'index']);
+    Route::get('/active', [ProductController::class, 'indexActiveProduct']);
+    Route::post('/', [ProductController::class, 'store']);
+    Route::get('/{id}', [ProductController::class, 'show']);
+    Route::get('/category/{id}', [ProductController::class, 'showByCategory']);
+    Route::get('/active/category/{id}', [ProductController::class, 'showByCategoryActiveProduct']);
+    Route::post('/{id}', [ProductController::class, 'update']);
+    // Route::delete('/{id}', [ProductController::class, 'destroy']);
+    Route::put('/updateCondition/{id}', [ProductController::class, 'updateCondition']);
+    Route::get('/product/{id}/exp-dates', [ProductController::class, 'getExpDates']);
+    // Route::get('/product/{product_id}/total-stock', [ProductController::class, 'getTotalStock']);
+    // Route::get('/product/{product_id}/stock/{exp_date}', [ProductController::class, 'getStockByDate']);
+});
+
 Route::get('/product-stocks-report', [ProductController::class, 'productStocksReport']);
 Route::get('/nonactive-history', [ProductController::class, 'getNonactiveProducts']);
 
-Route::middleware('auth:sanctum')->post('toggle-favorite/{productId}', [ProductController::class, 'toggleFavorite']);
-Route::middleware('auth:sanctum')->get('/check-favorite/{productId}', [ProductController::class, 'checkFavorite']);
-// Route::middleware('auth:sanctum')->get('/favorites', [ProductController::class, 'getFavorites']);
-Route::middleware('auth:sanctum')->get('/user-favorites', [ProductController::class, 'getAllFavorites']);
-
-// Route::get('/categories', [CategoryController::class, 'index']);
-// Route::post('/categories', [CategoryController::class, 'store']);
-// Route::get('/categories/{id}', [CategoryController::class, 'show']);
-// Route::put('/categories/{id}', [CategoryController::class, 'update']);
-// Route::delete('/categories/{id}', [CategoryController::class, 'destroy']);
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('toggle-favorite/{productId}', [ProductController::class, 'toggleFavorite']);
+    Route::get('/check-favorite/{productId}', [ProductController::class, 'checkFavorite']);
+    Route::get('/user-favorites', [ProductController::class, 'getAllFavorites']);
+    // Route::get('/favorites', [ProductController::class, 'getFavorites']);
+});
 
 Route::prefix('categories')->group(function () {
     Route::get('/', [CategoryController::class, 'index']);
@@ -75,10 +67,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('transactions/status-history/{id}', [TransactionController::class, 'deleteStatus']);
     Route::post('transactions/{id}/final-save', [TransactionController::class, 'finalSave']);
     Route::get('/transactions/{id}/check-final', [TransactionController::class, 'checkFinalStatus']);
+    Route::get('/dashboard', [TransactionController::class, 'dashboard']);
 });
-
-Route::get('admin/transactions', [TransactionController::class, 'adminShow']);
-Route::get('admin/transactions/{id}', action: [TransactionController::class, 'adminDetailShow']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/cart/add', [CartController::class, 'addToCart']);
@@ -96,8 +86,6 @@ Route::prefix('analysis')->group(function () {
     Route::get('/results', [AnalysisController::class, 'countAccuracy']);
 });
 
-Route::get('/dashboard', [DashboardController::class, 'index']);
-
 Route::prefix('entry-products')->group(function () {
     Route::get('/', [EntryProductController::class, 'index']);
     Route::post('/store', [EntryProductController::class, 'store']);
@@ -114,8 +102,11 @@ Route::prefix('exit-products')->group(function () {
 
 Route::prefix('auth')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
+    Route::post('/signup', [AuthController::class, 'store']);
     Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/signin', [AuthController::class, 'signin']);
     Route::get('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
+    Route::delete('/signout', action: [AuthController::class, 'destroy'])->middleware('auth:sanctum');
     Route::get('/users', [AuthController::class, 'showAllUser']);
     Route::get('/users/{id}', [AuthController::class, 'showUserById']);
     Route::middleware('auth:sanctum')->put('/user/update', [AuthController::class, 'updateProfile']);
@@ -127,12 +118,7 @@ Route::prefix('auth')->group(function () {
     Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 });
 
-// Route::get('/notifications', [NotificationController::class, 'index']);
-// // Route::delete('/notifications/{id}', [NotificationController::class, 'destroy']);
-// Route::put('/notifications/{id}', [NotificationController::class, 'read']);
-
 Route::prefix('notifications')->group(function () {
     Route::get('/', [NotificationController::class, 'index']);
-    // Route::delete('/{id}', [NotificationController::class, 'destroy']);
     Route::put('/{id}', [NotificationController::class, 'read']);
 });

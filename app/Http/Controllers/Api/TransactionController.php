@@ -11,24 +11,65 @@ use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use App\Models\TransactionStatusHistory;
+use Illuminate\Support\Facades\DB as FacadesDB;
 use Illuminate\Container\Attributes\DB as AttributesDB;
 
 class TransactionController extends Controller
 {
     // Menampilkan semua transaksi milik user yang login
+    // public function index()
+    // {
+    //     try {
+    //         $user = Auth::user();
+    //         $transactions = Transaction::with(['details.product', 'statusHistories'])
+    //             ->where('user_id', $user->id)
+    //             ->get();
+
+    //         // Tambahkan estimasi shipping_time untuk setiap transaksi
+    //         // $transactions = $transactions->map(function ($transaction) {
+    //         //     $transaction->shipping_time = $this->calculateShippingTime($transaction);
+    //         //     return $transaction;
+    //         // });
+
+    //         $transactions = $transactions->map(function ($transaction) {
+    //             $transaction->shipping_time = $this->calculateShippingTime($transaction);
+
+    //             $transaction->products = $transaction->details->map(function ($detail) {
+    //                 return [
+    //                     'product_id' => $detail->product->id,
+    //                     'name' => $detail->product->name,
+    //                     'code' => $detail->product->code,
+    //                     'price' => $detail->product->price,
+    //                     'quantity' => $detail->quantity,
+    //                     'exp_date' => $detail->exp_date,
+    //                     'photo' => $detail->product->photo,
+    //                     // 'photo' => url('storage/' . $detail->product->photo),
+    //                 ];
+    //             });
+
+    //             return $transaction;
+    //         });
+
+    //         return response()->json(['transactions' => $transactions], 200);
+    //     } catch (\Exception $e) {
+    //         return response()->json(['error' => 'Terjadi kesalahan saat mengambil data transaksi: ' . $e->getMessage()], 500);
+    //     }
+    // }
+
     public function index()
     {
         try {
             $user = Auth::user();
-            $transactions = Transaction::with(['details.product', 'statusHistories'])
-                ->where('user_id', $user->id)
-                ->get();
 
-            // Tambahkan estimasi shipping_time untuk setiap transaksi
-            // $transactions = $transactions->map(function ($transaction) {
-            //     $transaction->shipping_time = $this->calculateShippingTime($transaction);
-            //     return $transaction;
-            // });
+            if ($user->usertype === 'admin') {
+                // Jika admin, ambil semua transaksi
+                $transactions = Transaction::with(['details.product', 'statusHistories'])->get();
+            } else {
+                // Selain admin, ambil hanya transaksi milik user tersebut
+                $transactions = Transaction::with(['details.product', 'statusHistories'])
+                    ->where('user_id', $user->id)
+                    ->get();
+            }
 
             $transactions = $transactions->map(function ($transaction) {
                 $transaction->shipping_time = $this->calculateShippingTime($transaction);
@@ -42,7 +83,6 @@ class TransactionController extends Controller
                         'quantity' => $detail->quantity,
                         'exp_date' => $detail->exp_date,
                         'photo' => $detail->product->photo,
-                        // 'photo' => url('storage/' . $detail->product->photo),
                     ];
                 });
 
@@ -55,30 +95,91 @@ class TransactionController extends Controller
         }
     }
 
+
     // Menampilkan detail transaksi berdasarkan ID dan user
+    // public function show($id)
+    // {
+    //     try {
+    //         $user = Auth::user();
+    //         $transaction = Transaction::with(['details.product', 'statusHistories', 'user'])
+    //             ->where('id', $id)
+    //             ->where('user_id', $user->id)
+    //             ->firstOrFail();
+
+    //         $transaction->shipping_time = $this->calculateShippingTime($transaction);
+
+    //         $details = $transaction->products = $transaction->details->map(function ($detail) {
+    //             return [
+    //                 // 'product_id' => $detail->product->id,
+    //                 // 'product_name' => $detail->product->name,
+    //                 // 'product_code' => $detail->product->code,
+    //                 // 'product_price' => $detail->product->price,
+    //                 // 'quantity' => $detail->quantity,
+    //                 // 'stock_before' => $detail->stock_before,
+    //                 // 'stock_after' => $detail->stock_after,
+    //                 // 'exp_date' => $detail->exp_date,
+    //                 // 'photo' => $detail->product->photo,
+
+    //                 'id' => $detail->id,
+    //                 'transaction_id' => $detail->transaction_id,
+    //                 'product_id' => $detail->product_id,
+    //                 'quantity' => $detail->quantity,
+    //                 'exp_date' => $detail->exp_date,
+    //                 'product_name' => $detail->product_name,
+    //                 'product_code' => $detail->product_code,
+    //                 'product_price' => $detail->product_price,
+    //                 // 'product_photo' => $detail->product_photo,
+    //                 'product_photo' => $detail->product->photo,
+    //                 'stock_before' => $detail->stock_before,
+    //                 'stock_after' => $detail->stock_after,
+    //             ];
+    //         });
+
+    //         return response()->json([
+    //             'transaction' => [
+    //                 'id' => $transaction->id,
+    //                 'user_id' => $transaction->user_id,
+    //                 'user_name' => $transaction->user->name,
+    //                 'transaction_code' => $transaction->transaction_code,
+    //                 'status' => $transaction->status,
+    //                 'gross_amount' => $transaction->gross_amount,
+    //                 'shipping_cost' => $transaction->shipping_cost,
+    //                 'total_payment' => $transaction->total_payment,
+    //                 'shipping_method' => $transaction->shipping_method,
+    //                 'payment_method' => $transaction->payment_method,
+    //                 'shipping_time' => $this->calculateShippingTime($transaction),
+    //                 'transaction_date' => $transaction->transaction_date,
+    //             ],
+    //             'products' => $details,
+    //             'status_histories' => $transaction->statusHistories
+    //         ], 200);
+    //     } catch (\Exception $e) {
+    //         return response()->json(['error' => 'Transaksi tidak ditemukan atau Anda tidak memiliki akses.'], 404);
+    //     }
+    // }
+
     public function show($id)
     {
         try {
             $user = Auth::user();
-            $transaction = Transaction::with(['details.product', 'statusHistories', 'user'])
-                ->where('id', $id)
-                ->where('user_id', $user->id)
-                ->firstOrFail();
+
+            if ($user->usertype === 'admin') {
+                // Admin bisa akses transaksi manapun berdasarkan ID
+                $transaction = Transaction::with(['details.product', 'statusHistories', 'user'])
+                    ->where('id', $id)
+                    ->firstOrFail();
+            } else {
+                // Selain admin, hanya boleh akses transaksi miliknya sendiri
+                $transaction = Transaction::with(['details.product', 'statusHistories', 'user'])
+                    ->where('id', $id)
+                    ->where('user_id', $user->id)
+                    ->firstOrFail();
+            }
 
             $transaction->shipping_time = $this->calculateShippingTime($transaction);
 
             $details = $transaction->products = $transaction->details->map(function ($detail) {
                 return [
-                    // 'product_id' => $detail->product->id,
-                    // 'product_name' => $detail->product->name,
-                    // 'product_code' => $detail->product->code,
-                    // 'product_price' => $detail->product->price,
-                    // 'quantity' => $detail->quantity,
-                    // 'stock_before' => $detail->stock_before,
-                    // 'stock_after' => $detail->stock_after,
-                    // 'exp_date' => $detail->exp_date,
-                    // 'photo' => $detail->product->photo,
-
                     'id' => $detail->id,
                     'transaction_id' => $detail->transaction_id,
                     'product_id' => $detail->product_id,
@@ -87,7 +188,6 @@ class TransactionController extends Controller
                     'product_name' => $detail->product_name,
                     'product_code' => $detail->product_code,
                     'product_price' => $detail->product_price,
-                    // 'product_photo' => $detail->product_photo,
                     'product_photo' => $detail->product->photo,
                     'stock_before' => $detail->stock_before,
                     'stock_after' => $detail->stock_after,
@@ -106,12 +206,13 @@ class TransactionController extends Controller
                     'total_payment' => $transaction->total_payment,
                     'shipping_method' => $transaction->shipping_method,
                     'payment_method' => $transaction->payment_method,
-                    'shipping_time' => $this->calculateShippingTime($transaction),
+                    'shipping_time' => $transaction->shipping_time,
                     'transaction_date' => $transaction->transaction_date,
                 ],
                 'products' => $details,
                 'status_histories' => $transaction->statusHistories
             ], 200);
+
         } catch (\Exception $e) {
             return response()->json(['error' => 'Transaksi tidak ditemukan atau Anda tidak memiliki akses.'], 404);
         }
@@ -491,6 +592,74 @@ class TransactionController extends Controller
         }
 
         // return 'Waktu Pengiriman : ' . $start->translatedFormat('d F Y, H:i') . ' - ' . $end->translatedFormat('H:i');
+    }
+
+    public function dashboard(Request $request)
+    {
+        $monthName = $request->input('month', Carbon::now()->locale('id')->translatedFormat('F'));
+        $year = $request->input('year', Carbon::now()->year); // Ambil tahun dari request
+
+        $bulanMap = [
+            'Januari' => 1,
+            'Februari' => 2,
+            'Maret' => 3,
+            'April' => 4,
+            'Mei' => 5,
+            'Juni' => 6,
+            'Juli' => 7,
+            'Agustus' => 8,
+            'September' => 9,
+            'Oktober' => 10,
+            'November' => 11,
+            'Desember' => 12,
+        ];
+
+        $monthNumber = $bulanMap[$monthName] ?? null;
+        if (!$monthNumber) {
+            return response()->json(['error' => 'Bulan tidak valid.'], 400);
+        }
+
+        // Gunakan tahun dari input
+        $startDate = Carbon::createFromDate($year, $monthNumber, 1)->startOfMonth();
+        $endDate = Carbon::createFromDate($year, $monthNumber, 1)->endOfMonth();
+
+        // Total pendapatan dan transaksi bulan + tahun terpilih
+        $totalRevenue = Transaction::whereBetween('transaction_date', [$startDate, $endDate])->sum('total_payment');
+        $totalTransactions = Transaction::whereBetween('transaction_date', [$startDate, $endDate])->count();
+
+        $totalProducts = Product::count();
+
+        $topProducts = TransactionDetail::join('products', 'transaction_details.product_id', '=', 'products.id')
+            ->join('categories', 'products.category_id', '=', 'categories.id')
+            ->select(
+                'products.id',
+                'products.name',
+                'products.price',
+                'products.photo',
+                'categories.name as category_name',
+                FacadesDB::raw('SUM(transaction_details.quantity) as total_sold')
+            )
+            ->groupBy('products.id', 'products.name', 'categories.name', 'products.price', 'products.photo')
+            ->orderByDesc('total_sold')
+            ->limit(3)
+            ->get();
+
+        // Grafik penjualan (8 bulan terakhir dari current date)
+        $salesByMonth = Transaction::whereBetween('transaction_date', [Carbon::now()->subMonths(8), Carbon::now()])
+            ->selectRaw('DATE_FORMAT(transaction_date, "%Y-%m") as month, SUM(gross_amount) as revenue')
+            ->groupBy('month')
+            ->orderBy('month')
+            ->get();
+
+        return response()->json([
+            'total_revenue' => $totalRevenue,
+            'total_transactions' => $totalTransactions,
+            'total_products' => $totalProducts,
+            'top_products' => $topProducts,
+            'sales_by_month' => $salesByMonth,
+            'selected_month' => $monthName,
+            'selected_year' => (int) $year,
+        ]);
     }
 }
 

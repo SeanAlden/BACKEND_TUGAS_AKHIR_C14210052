@@ -54,6 +54,30 @@ class AuthController extends Controller
         ], 201);
     }
 
+    public function store(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|max:255',
+            'email' => 'required|unique:users,email|max:255|email',
+            'phone' => 'required|string|max:20',
+            'password' => 'required|string|confirmed|min:5|max:255'
+        ]);
+
+        $user = User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'phone' => $request->phone,
+            'password' => bcrypt($request->password),
+            'usertype' => 'employee' // default value
+        ]);
+        $token = $user->createToken('auth_token')->plainTextToken;
+        $reesponse = [
+            'user' => $user,
+            'token' => $token
+        ];
+        return response($reesponse, 201);
+    }
+
     public function login(Request $request)
     {
         $request->validate([
@@ -69,18 +93,28 @@ class AuthController extends Controller
             ]);
         }
 
-        // $token = $user->createToken($request->email)->plainTextToken;
-
-        // $response = [
-        //     'user' => $user,
-        //     'token' => $token
-        // ];
-        // return response($response, 200);
-
-        // return response()->json([
-        //     'token' => $user->createToken($request->email)->plainTextToken,
-        // ]);
         return $user->createToken($request->email)->plainTextToken;
+    }
+
+    public function signin(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'password' => 'required|string',
+        ]);
+
+        $user = User::where('email', $request->email)->first();
+        if (!$user || !Hash::check($request->password, $user->password)) {
+            return response([
+                'message' => 'Bad login crads'
+            ], 401); 
+        }
+        $token = $user->createToken('auth_token')->plainTextToken;
+        $response = [
+            'user' => $user,
+            'token' => $token
+        ];
+        return response($response, 201);
     }
 
     public function logout(Request $request)
@@ -92,6 +126,15 @@ class AuthController extends Controller
             'success' => true,
             'message' => 'Logged out successfully'
         ]);
+    }
+
+    public function destroy(Request $request)
+    {
+        auth()->user()->tokens()->delete();
+        return [
+            'status' => 201,
+            'message' => 'Logged Out'
+        ];
     }
 
     // Menampilkan semua user
