@@ -715,7 +715,7 @@
 //     }
 // }
 
-namespace App\Http\Controllers\API;
+namespace App\Http\Controllers\Api;
 
 use App\Models\Product;
 use App\Models\SalesCount;
@@ -820,7 +820,7 @@ class AnalysisController extends Controller
         }
 
         $tMax = Carbon::parse(Transaction::max('transaction_date'));
-        $lambda = 0.007;
+        $lambda = 0.005;
         $weightedSales = [];
         $firstTransactionDates = [];
 
@@ -943,11 +943,96 @@ class AnalysisController extends Controller
         ]);
     }
 
+    // private function buildDecisionTree($gainValues, $accuracy, $products)
+    // {
+    //     if (empty($gainValues)) {
+    //         return "Tidak ada decision tree.";
+    //     }
+
+    //     $bestAttribute = array_keys($gainValues, max($gainValues))[0];
+    //     $tree = "Root Node: $bestAttribute\n";
+
+    //     foreach ($accuracy as $productId => $acc) {
+    //         $product = $products[$productId] ?? null;
+    //         if (!$product)
+    //             continue;
+
+    //         $productName = $product['name'];
+    //         $priceCategory = match (true) {
+    //             $product['price'] > 500000 => 'sangat tinggi',
+    //             $product['price'] >= 200000 => 'tinggi',
+    //             $product['price'] >= 50000 => 'sedang',
+    //             $product['price'] >= 20000 => 'rendah',
+    //             $product['price'] >= 10000 => 'sangat rendah',
+    //             default => 'sangat rendah',
+    //         };
+
+    //         $stockCategory = match (true) {
+    //             $product['stocks'] > 200 => 'sangat tinggi',
+    //             $product['stocks'] >= 100 => 'tinggi',
+    //             $product['stocks'] >= 60 => 'sedang',
+    //             $product['stocks'] >= 15 => 'rendah',
+    //             $product['stocks'] >= 7 => 'sangat rendah',
+    //             default => 'sangat rendah',
+    //         };
+
+    //         $accuracyCategory = match (true) {
+    //             $acc >= 90 => 'sangat tinggi',
+    //             $acc >= 80 => 'tinggi',
+    //             $acc >= 40 => 'sedang',
+    //             $acc >= 20 => 'rendah',
+    //             $acc >= 0 => 'sangat rendah',
+    //             default => 'sangat rendah',
+    //         };
+
+    //         $tree .= "|-- *$productName*
+    // |---Akurasi: $accuracyCategory ($acc%)
+    // |---Harga: $priceCategory
+    // |---Stok: $stockCategory\n";
+
+    //         if ($accuracyCategory == "tinggi") {
+    //             $tree .= "              ├─ Kondisi: Produk ini sangat menguntungkan! Optimalkan pemasaran & atur stok.\n";
+    //         } elseif ($accuracyCategory == "sedang") {
+    //             $tree .= "              ├─ Kondisi: Perlu strategi pemasaran lebih agresif.\n";
+    //         } else {
+    //             $tree .= "              ├─ Kondisi: Tidak laku. Evaluasi apakah perlu dihentikan atau diskon besar.\n";
+    //         }
+
+    //         $recommendation = match ($accuracyCategory) {
+    //             'tinggi' => "Produk ini sangat menguntungkan! Optimalkan pemasaran & atur stok.",
+    //             'sedang' => "Perlu strategi pemasaran lebih agresif.",
+    //             default => "Tidak laku. Evaluasi apakah perlu dihentikan atau diskon besar.",
+    //         };
+
+    //         DecisionTree::updateOrCreate(
+    //             ['product_id' => $productId],
+    //             [
+    //                 'accuracy_category' => $accuracyCategory,
+    //                 'price_category' => $priceCategory,
+    //                 'stock_category' => $stockCategory,
+    //                 'recommendation' => $recommendation
+    //             ]
+    //         );
+
+    //         AccuracyPrediction::updateOrCreate(
+    //             ['product_id' => $productId],
+    //             ['accuracy_percentage' => round($acc, 2)]
+    //         );
+    //     }
+    //     return $tree;
+    // }
+
     private function buildDecisionTree($gainValues, $accuracy, $products)
     {
         if (empty($gainValues)) {
             return "Tidak ada decision tree.";
         }
+
+        // Urutkan berdasarkan akurasi dari tinggi ke rendah
+        // arsort($accuracy);
+
+        $accuracy = is_array($accuracy) ? $accuracy : $accuracy->toArray(); // konversi Collection ke array
+        arsort($accuracy); // urutkan dari akurasi tertinggi ke terendah
 
         $bestAttribute = array_keys($gainValues, max($gainValues))[0];
         $tree = "Root Node: $bestAttribute\n";
@@ -959,41 +1044,84 @@ class AnalysisController extends Controller
 
             $productName = $product['name'];
             $priceCategory = match (true) {
-                $product['price'] > 200000 => 'tinggi',
-                $product['price'] >= 100000 => 'sedang',
-                default => 'rendah',
+                $product['price'] > 500000 => 'sangat tinggi',
+                $product['price'] >= 200000 => 'tinggi',
+                $product['price'] >= 50000 => 'sedang',
+                $product['price'] >= 20000 => 'rendah',
+                $product['price'] >= 10000 => 'sangat rendah',
+                default => 'sangat rendah',
             };
 
             $stockCategory = match (true) {
-                $product['stocks'] > 100 => 'tinggi',
-                $product['stocks'] >= 20 => 'sedang',
-                default => 'rendah',
+                $product['stocks'] > 200 => 'sangat tinggi',
+                $product['stocks'] >= 100 => 'tinggi',
+                $product['stocks'] >= 60 => 'sedang',
+                $product['stocks'] >= 15 => 'rendah',
+                $product['stocks'] >= 7 => 'sangat rendah',
+                default => 'sangat rendah',
             };
 
             $accuracyCategory = match (true) {
-                $acc >= 85 => 'tinggi',
-                $acc >= 60 => 'sedang',
-                default => 'rendah',
+                $acc >= 90 => 'sangat tinggi',
+                $acc >= 80 => 'tinggi',
+                $acc >= 40 => 'sedang',
+                $acc >= 20 => 'rendah',
+                $acc >= 0 => 'sangat rendah',
+                default => 'sangat rendah',
             };
+
+            // Tentukan kondisi dan rekomendasi berdasarkan kombinasi kategori
+            $condition = "";
+            $recommendation = "";
+
+            if ($accuracyCategory === 'sangat tinggi') {
+                if ($priceCategory === 'sangat tinggi' || $stockCategory === 'sangat tinggi') {
+                    $condition = "Produk sangat laku dan bernilai tinggi. Fokus pada kestabilan distribusi dan pelayanan.";
+                    $recommendation = "Pertahankan kualitas dan perkuat supply chain.";
+                } else {
+                    $condition = "Produk sangat laku. Pastikan stok dan harga tetap kompetitif.";
+                    $recommendation = "Optimalkan pemasaran dan ketersediaan barang.";
+                }
+            } elseif ($accuracyCategory === 'tinggi') {
+                if ($priceCategory === 'tinggi' && $stockCategory === 'tinggi') {
+                    $condition = "Produk laku dan memiliki margin bagus.";
+                    $recommendation = "Fokus pada iklan dan jaga kestabilan stok.";
+                } else {
+                    $condition = "Produk laku. Perlu perhatian pada manajemen stok atau harga.";
+                    $recommendation = "Tingkatkan efisiensi dalam harga dan stok.";
+                }
+            } elseif ($accuracyCategory === 'sedang') {
+                if ($priceCategory === 'sedang' && $stockCategory === 'sedang') {
+                    $condition = "Produk sedang. Perlu strategi lebih agresif.";
+                    $recommendation = "Perkuat promosi dan evaluasi harga.";
+                } else {
+                    $condition = "Produk lumayan laku.";
+                    $recommendation = "Lakukan survei pasar untuk peningkatan.";
+                }
+            } elseif ($accuracyCategory === 'rendah') {
+                if ($priceCategory === 'tinggi') {
+                    $condition = "Produk tidak laku kemungkinan karena harga tinggi.";
+                    $recommendation = "Evaluasi harga atau berikan diskon.";
+                } else {
+                    $condition = "Produk kurang diminati.";
+                    $recommendation = "Ubah strategi pemasaran dan pertimbangkan diskon.";
+                }
+            } else { // sangat rendah
+                if ($stockCategory === 'sangat tinggi') {
+                    $condition = "Produk tidak laku tapi stok berlebihan.";
+                    $recommendation = "Kurangi produksi dan lakukan cuci gudang.";
+                } else {
+                    $condition = "Produk tidak laku.";
+                    $recommendation = "Pertimbangkan untuk menghapus produk atau ubah strategi besar-besaran.";
+                }
+            }
 
             $tree .= "|-- *$productName*
     |---Akurasi: $accuracyCategory ($acc%)
     |---Harga: $priceCategory
-    |---Stok: $stockCategory\n";
-
-            if ($accuracyCategory == "tinggi") {
-                $tree .= "              ├─ Kondisi: Produk ini sangat menguntungkan! Optimalkan pemasaran & atur stok.\n";
-            } elseif ($accuracyCategory == "sedang") {
-                $tree .= "              ├─ Kondisi: Perlu strategi pemasaran lebih agresif.\n";
-            } else {
-                $tree .= "              ├─ Kondisi: Tidak laku dan stok berlebih. Evaluasi apakah perlu dihentikan atau diskon besar.\n";
-            }
-
-            $recommendation = match ($accuracyCategory) {
-                'tinggi' => "Produk ini sangat menguntungkan! Optimalkan pemasaran & atur stok.",
-                'sedang' => "Perlu strategi pemasaran lebih agresif.",
-                default => "Tidak laku dan stok berlebih. Evaluasi apakah perlu dihentikan atau diskon besar.",
-            };
+    |---Stok: $stockCategory
+    |---Kondisi: $condition
+                ├─ Rekomendasi: $recommendation\n";
 
             DecisionTree::updateOrCreate(
                 ['product_id' => $productId],
@@ -1010,6 +1138,7 @@ class AnalysisController extends Controller
                 ['accuracy_percentage' => round($acc, 2)]
             );
         }
+
         return $tree;
     }
 

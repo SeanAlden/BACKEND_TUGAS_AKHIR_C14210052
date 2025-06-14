@@ -132,17 +132,39 @@ class CartController extends Controller
         ], 200);
     }
 
+    // public function updateCart(Request $request, $id)
+    // {
+    //     $request->validate([
+    //         'quantity' => 'required|integer|min:0',
+    //     ]);
+
+    //     $cart = Cart::findOrFail($id);
+
+    //     if ($cart->user_id !== Auth::id()) {
+    //         return response()->json(['error' => 'Unauthorized'], 403);
+    //     }
+
+    //     $cart->quantity = $request->quantity;
+    //     $cart->gross_amount = ($cart->product->price * $request->quantity);
+    //     $cart->save();
+
+    //     return response()->json(['success' => true, 'cart' => $cart], 200);
+    // }
+
     public function updateCart(Request $request, $id)
     {
+        $user = Auth::user();
+
         $request->validate([
             'quantity' => 'required|integer|min:0',
         ]);
 
-        $cart = Cart::findOrFail($id);
+        $cart = Cart::where('id', $id)->where('user_id', $user->id)->firstOrFail();
 
-        if ($cart->user_id !== Auth::id()) {
-            return response()->json(['error' => 'Unauthorized'], 403);
-        }
+
+        // if ($cart->user_id !== Auth::id()) {
+        //     return response()->json(['error' => 'Unauthorized'], 403);
+        // }
 
         $cart->quantity = $request->quantity;
         $cart->gross_amount = ($cart->product->price * $request->quantity);

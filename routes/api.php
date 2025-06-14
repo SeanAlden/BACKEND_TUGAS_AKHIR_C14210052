@@ -101,11 +101,11 @@ Route::prefix('exit-products')->group(function () {
 });
 
 Route::prefix('auth')->group(function () {
-    Route::post('/register', [AuthController::class, 'register']);
+    // Route::post('/register', [AuthController::class, 'register']);
     Route::post('/signup', [AuthController::class, 'store']);
-    Route::post('/login', [AuthController::class, 'login']);
+    // Route::post('/login', [AuthController::class, 'login']);
     Route::post('/signin', [AuthController::class, 'signin']);
-    Route::get('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
+    // Route::get('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
     Route::delete('/signout', action: [AuthController::class, 'destroy'])->middleware('auth:sanctum');
     Route::get('/users', [AuthController::class, 'showAllUser']);
     Route::get('/users/{id}', [AuthController::class, 'showUserById']);

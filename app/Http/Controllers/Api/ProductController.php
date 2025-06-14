@@ -656,91 +656,166 @@ class ProductController extends Controller
     //     }
     // }
 
+    // public function update(Request $request, $id)
+    // {
+    //     try {
+    //         Log::info("Memulai proses update produk dengan ID: $id");
+
+    //         $product = Product::find($id);
+
+    //         if (!$product) {
+    //             Log::warning("Produk dengan ID $id tidak ditemukan.");
+    //             return response()->json([
+    //                 'success' => false,
+    //                 'message' => 'Produk tidak ditemukan'
+    //             ], 404);
+    //         }
+
+    //         Log::info("Produk ditemukan. Memvalidasi input.");
+
+    //         $request->validate([
+    //             'code' => [
+    //                 'required',
+    //                 Rule::unique('products', 'code')->ignore($id),
+    //             ],
+    //             'name' => 'required',
+    //             'price' => 'required|numeric',
+    //             // 'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+    //             'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif',
+    //             'description' => 'required',
+    //             'category_id' => 'required',
+    //             'stocks' => 'required|array',
+    //             'stocks.*.exp_date' => 'required|date',
+    //             'stocks.*.stock' => 'required|numeric|min:1'
+    //         ], [
+    //             'code.unique' => 'Kode produk sudah digunakan, silakan gunakan kode lain.'
+    //         ]);
+
+    //         Log::info("Validasi berhasil. Memperbarui produk.");
+
+    //         $product->update([
+    //             'code' => $request->code,
+    //             'name' => $request->name,
+    //             'price' => $request->price,
+    //             'description' => $request->description,
+    //             'category_id' => $request->category_id,
+    //             'photo' => $request->hasFile('photo')
+    //                 ? $request->file('photo')->store('product_photos', 'public')
+    //                 : $product->photo,
+    //         ]);
+
+    //         Log::info("Produk berhasil diperbarui. Menghapus stok lama.");
+
+    //         $product->stocks()->delete();
+
+    //         Log::info("Menambahkan stok baru.");
+    //         foreach ($request->stocks as $index => $stockData) {
+    //             Log::info("Menambahkan stok ke-$index: ", $stockData);
+    //             ProductStock::create([
+    //                 'product_id' => $product->id,
+    //                 'exp_date' => $stockData['exp_date'],
+    //                 'stock' => $stockData['stock']
+    //             ]);
+    //         }
+
+    //         Log::info("Semua stok berhasil ditambahkan untuk produk ID $product->id.");
+
+    //         return response()->json([
+    //             'success' => true,
+    //             'message' => 'Produk berhasil diperbarui!',
+    //             'data' => $product->load('stocks')
+    //         ], 200);
+    //     } catch (\Illuminate\Validation\ValidationException $e) {
+    //         Log::error("Validasi gagal: ", $e->errors());
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'Terdapat Field yang belum diisi',
+    //             'errors' => $e->errors()
+    //         ], 422);
+    //     } catch (\Exception $e) {
+    //         Log::error("Kesalahan saat menyimpan produk: " . $e->getMessage());
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'Terjadi kesalahan saat menyimpan produk',
+    //             'error' => $e->getMessage()
+    //         ], 500);
+    //     }
+    // }
+
     public function update(Request $request, $id)
     {
         try {
-            Log::info("Memulai proses update produk dengan ID: $id");
+            // Temukan produk berdasarkan ID
+            $product = Product::findOrFail($id);
 
-            $product = Product::find($id);
-
-            if (!$product) {
-                Log::warning("Produk dengan ID $id tidak ditemukan.");
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Produk tidak ditemukan'
-                ], 404);
-            }
-
-            Log::info("Produk ditemukan. Memvalidasi input.");
-
-            $request->validate([
-                'code' => [
-                    'required',
-                    Rule::unique('products', 'code')->ignore($id),
-                ],
+            // Validasi input
+            $validatedData = $request->validate([
+                'code' => 'required|unique:products,code,' . $id,
                 'name' => 'required',
                 'price' => 'required|numeric',
-                // 'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
                 'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif',
                 'description' => 'required',
                 'category_id' => 'required',
                 'stocks' => 'required|array',
                 'stocks.*.exp_date' => 'required|date',
                 'stocks.*.stock' => 'required|numeric|min:1'
-            ], [
-                'code.unique' => 'Kode produk sudah digunakan, silakan gunakan kode lain.'
             ]);
-
-            Log::info("Validasi berhasil. Memperbarui produk.");
-
+    
+            // Simpan foto jika ada
+            if ($request->hasFile('photo')) {
+                // Hapus foto lama jika ada
+                if ($product->photo && \Storage::disk('public')->exists($product->photo)) {
+                    \Storage::disk('public')->delete($product->photo);
+                }
+    
+                $photoPath = $request->file('photo')->store('product_photos', 'public');
+            } else {
+                $photoPath = $product->photo; // Gunakan foto lama jika tidak ada file baru
+            }
+    
+            // Update produk
             $product->update([
                 'code' => $request->code,
                 'name' => $request->name,
                 'price' => $request->price,
+                'photo' => $photoPath,
                 'description' => $request->description,
-                'category_id' => $request->category_id,
-                'photo' => $request->hasFile('photo')
-                    ? $request->file('photo')->store('product_photos', 'public')
-                    : $product->photo,
+                'category_id' => $request->category_id
             ]);
-
-            Log::info("Produk berhasil diperbarui. Menghapus stok lama.");
-
+    
+            // Hapus stok lama
             $product->stocks()->delete();
-
-            Log::info("Menambahkan stok baru.");
-            foreach ($request->stocks as $index => $stockData) {
-                Log::info("Menambahkan stok ke-$index: ", $stockData);
+    
+            // Simpan stok baru
+            foreach ($request->stocks as $stockData) {
                 ProductStock::create([
                     'product_id' => $product->id,
                     'exp_date' => $stockData['exp_date'],
                     'stock' => $stockData['stock']
                 ]);
             }
-
-            Log::info("Semua stok berhasil ditambahkan untuk produk ID $product->id.");
-
+    
             return response()->json([
                 'success' => true,
                 'message' => 'Produk berhasil diperbarui!',
                 'data' => $product->load('stocks')
             ], 200);
+    
         } catch (\Illuminate\Validation\ValidationException $e) {
-            Log::error("Validasi gagal: ", $e->errors());
             return response()->json([
                 'success' => false,
-                'message' => 'Terdapat Field yang belum diisi',
+                'message' => 'Validasi gagal!',
                 'errors' => $e->errors()
             ], 422);
         } catch (\Exception $e) {
-            Log::error("Kesalahan saat menyimpan produk: " . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Terjadi kesalahan saat menyimpan produk',
+                'message' => 'Terjadi kesalahan saat memperbarui produk',
                 'error' => $e->getMessage()
             ], 500);
         }
     }
+
 
     // public function destroy($id)
     // {
@@ -1321,12 +1396,26 @@ class ProductController extends Controller
     //     ]);
     // }
 
+    // public function getAllFavorites()
+    // {
+    //     $user = Auth::user();
+
+    //     $favoriteProducts = Favorite::where('user_id', $user->id)
+    //         ->with('product') // pastikan relasi favorite->product ada
+    //         ->get()
+    //         ->pluck('product');
+
+    //     return response()->json([
+    //         'favorites' => $favoriteProducts
+    //     ]);
+    // }
+
     public function getAllFavorites()
     {
         $user = Auth::user();
 
         $favoriteProducts = Favorite::where('user_id', $user->id)
-            ->with('product') // pastikan relasi favorite->product ada
+            ->with(['product.stocks', 'product.category']) // tambahkan stocks & category
             ->get()
             ->pluck('product');
 
@@ -1334,5 +1423,8 @@ class ProductController extends Controller
             'favorites' => $favoriteProducts
         ]);
     }
+    
 }
+
+
 

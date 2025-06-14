@@ -19,7 +19,7 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => [env('FRONTEND_URL', 'http://localhost:3000')],
+    'allowed_origins' => ['https://asiaraya.netlify.app'],
 
     'allowed_origins_patterns' => [],
 
@@ -30,5 +30,21 @@ return [
     'max_age' => 0,
 
     'supports_credentials' => true,
+
+    // 'paths' => ['*'],
+
+    // 'allowed_methods' => ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+
+    // 'allowed_origins' => [env('FRONTEND_URL','http://127.0.0.1:3000')],
+
+    // 'allowed_origins_patterns' => [],
+
+    // 'allowed_headers' => ['Content-Type', 'X-Requested-With', 'Authorization', 'Origin', 'Accept'],
+
+    // 'exposed_headers' => [],
+
+    // 'max_age' => 0,
+
+    // 'supports_credentials' => true,
 
 ];
