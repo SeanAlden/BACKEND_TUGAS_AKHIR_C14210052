@@ -307,7 +307,7 @@ class ProductController extends Controller
                 'category_id' => 'required',
                 'stocks' => 'required|array',
                 'stocks.*.exp_date' => 'required|date',
-                'stocks.*.stock' => 'required|numeric|min:1'
+                'stocks.*.stock' => 'required|numeric|min:0'
             ]);
 
             // Cek apakah kode produk sudah ada
@@ -758,7 +758,7 @@ class ProductController extends Controller
                 'category_id' => 'required',
                 'stocks' => 'required|array',
                 'stocks.*.exp_date' => 'required|date',
-                'stocks.*.stock' => 'required|numeric|min:1'
+                'stocks.*.stock' => 'required|numeric|min:0'
             ]);
     
             // Simpan foto jika ada

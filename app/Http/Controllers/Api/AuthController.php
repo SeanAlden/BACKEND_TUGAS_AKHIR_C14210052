@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use Psy\Util\Str;
 use App\Models\User;
+use App\Rules\ReChaptcha;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
@@ -15,6 +16,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Anhskohbo\NoCaptcha\Facades\NoCaptcha;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -101,6 +103,7 @@ class AuthController extends Controller
         $request->validate([
             'email' => 'required|email',
             'password' => 'required|string',
+            'g-recaptcha-response' => [new ReChaptcha()],
         ]);
 
         $user = User::where('email', $request->email)->first();
