@@ -29,32 +29,6 @@ class Transaction extends Model
         // 'is_final' => 'boolean',
     ];
 
-    // protected static function boot()
-    // {
-    //     parent::boot();
-
-    //     static::creating(function ($transaction) {
-    //         $datePart = now()->format('Ymd');
-    //         $lastTransaction = self::whereDate('created_at', now()->toDateString())
-    //             ->orderBy('id', 'desc')
-    //             ->first();
-
-    //         $nextNumber = 1;
-
-    //         if ($lastTransaction && $lastTransaction->transaction_code) {
-    //             $lastNumber = (int) substr($lastTransaction->transaction_code, -4);
-    //             $nextNumber = $lastNumber + 1;
-    //         }
-
-    //         $transaction->transaction_code = 'TRX-' . $datePart . '-' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
-    //     });
-    // }
-
-    // public function details()
-    // {
-    //     return $this->hasMany(TransactionDetail::class);
-    // }
-
     public function details()
     {
         return $this->hasMany(TransactionDetail::class);

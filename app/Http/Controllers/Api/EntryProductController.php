@@ -31,41 +31,104 @@ class EntryProductController extends Controller
     //     return response()->json(['success' => true, 'message' => 'Stok berhasil ditambahkan', 'data' => $entry], 201);
     // }
 
+    // public function store(Request $request)
+    // {
+    //     $validated = $request->validate([
+    //         'product_id' => 'required|exists:products,id',
+    //         'exp_date' => 'required|date',
+    //         'added_stock' => 'required|integer|min:1',
+    //     ]);
+
+    //     // Ambil stok saat ini sebelum barang masuk
+    //     $productStock = ProductStock::where([
+    //         'product_id' => $request->product_id,
+    //         'exp_date' => $request->exp_date
+    //     ])->first();
+
+    //     $previousStock = $productStock ? $productStock->stock : 0;
+    //     $currentStock = $previousStock + $request->added_stock;
+
+    //     // Tambahkan ke tabel entry_products
+    //     $entry = EntryProduct::create([
+    //         'product_id' => $request->product_id,
+    //         'exp_date' => $request->exp_date,
+    //         'added_stock' => $request->added_stock,
+    //         'previous_stock' => $previousStock,
+    //         'current_stock' => $currentStock,
+    //     ]);
+
+    //     // Update stok di product_stocks
+    //     ProductStock::updateOrCreate(
+    //         ['product_id' => $request->product_id, 'exp_date' => $request->exp_date],
+    //         ['stock' => $currentStock]
+    //     );
+
+    //     return response()->json(['success' => true, 'message' => 'Stok berhasil ditambahkan', 'data' => $entry], 201);
+    // }
+
     public function store(Request $request)
     {
+        // Validasi yang lebih fleksibel: exp_date atau new_exp_date harus ada, tapi tidak keduanya.
         $validated = $request->validate([
             'product_id' => 'required|exists:products,id',
-            'exp_date' => 'required|date',
             'added_stock' => 'required|integer|min:1',
+            'exp_date' => 'required_without:new_exp_date|nullable|date',
+            'new_exp_date' => 'required_without:exp_date|nullable|date|after_or_equal:today',
         ]);
 
-        // Ambil stok saat ini sebelum barang masuk
-        $productStock = ProductStock::where([
-            'product_id' => $request->product_id,
-            'exp_date' => $request->exp_date
-        ])->first();
+        $expDateToUse = '';
+        $previousStock = 0;
 
-        $previousStock = $productStock ? $productStock->stock : 0;
+        // Skenario 1: Pengguna membuat tanggal expired baru
+        if ($request->has('new_exp_date') && !empty($request->new_exp_date)) {
+            $expDateToUse = $request->new_exp_date;
+
+            // Pastikan tanggal baru ini belum ada untuk produk yang sama untuk menghindari duplikat
+            $existingStock = ProductStock::where('product_id', $request->product_id)
+                ->where('exp_date', $expDateToUse)
+                ->exists();
+            if ($existingStock) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tanggal expired yang Anda masukkan sudah ada untuk produk ini. Silakan pilih dari daftar.'
+                ], 422); // Unprocessable Entity
+            }
+
+            // Karena ini tanggal baru, stok sebelumnya pasti 0
+            $previousStock = 0;
+
+            // Skenario 2: Pengguna memilih tanggal expired yang sudah ada
+        } else {
+            $expDateToUse = $request->exp_date;
+
+            // Ambil stok saat ini dari tanggal yang dipilih
+            $productStock = ProductStock::where('product_id', $request->product_id)
+                ->where('exp_date', $expDateToUse)
+                ->first();
+
+            $previousStock = $productStock ? $productStock->stock : 0;
+        }
+
+        // Lanjutkan dengan logika yang sama untuk kedua skenario
         $currentStock = $previousStock + $request->added_stock;
 
-        // Tambahkan ke tabel entry_products
+        // Tambahkan ke tabel riwayat (entry_products)
         $entry = EntryProduct::create([
             'product_id' => $request->product_id,
-            'exp_date' => $request->exp_date,
+            'exp_date' => $expDateToUse,
             'added_stock' => $request->added_stock,
             'previous_stock' => $previousStock,
             'current_stock' => $currentStock,
         ]);
 
-        // Update stok di product_stocks
+        // Buat atau perbarui stok di tabel utama (product_stocks)
         ProductStock::updateOrCreate(
-            ['product_id' => $request->product_id, 'exp_date' => $request->exp_date],
+            ['product_id' => $request->product_id, 'exp_date' => $expDateToUse],
             ['stock' => $currentStock]
         );
 
         return response()->json(['success' => true, 'message' => 'Stok berhasil ditambahkan', 'data' => $entry], 201);
     }
-
 
     // public function index()
     // {
@@ -188,17 +251,7 @@ class EntryProductController extends Controller
         if (!$productStock) {
             return response()->json(['success' => false, 'message' => 'Stok produk tidak ditemukan'], 400);
         }
-
-        // Cek apakah stok sebelum dikurangi 10 atau kurang
-        // if ($productStock->stock <= 10) {
-        //     return response()->json(['success' => false, 'message' => 'Stok tidak mencukupi (stok saat ini 10 atau kurang)'], 400);
-        // }
-
-        // Cek apakah pengurangan akan menyebabkan stok negatif atau 0
-        // if ($productStock->stock + $request->added_stock < 0) {
-        //     return response()->json(['success' => false, 'message' => 'Pengurangan stok tidak dapat dilakukan karena akan menyebabkan stok dibawah 0'], 400);
-        // }
-
+        
         // Simpan stok sebelum perubahan
         $previousStock = $productStock->stock;
 

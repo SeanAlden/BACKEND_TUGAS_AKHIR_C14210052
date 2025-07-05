@@ -47,7 +47,6 @@ class CategoryController extends Controller
         return response()->json($category);
     }
 
-
     public function update(Request $request, $id)
     {
         $request->validate([

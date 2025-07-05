@@ -38,26 +38,6 @@ class Product extends Model
             ->withTimestamps();
     }
 
-    public function predictions()
-    {
-        return $this->hasMany(SalesCount::class);
-    }
-
-    public function entropyGains()
-    {
-        return $this->hasMany(EntropyGain::class);
-    }
-
-    public function decisionTree()
-    {
-        return $this->hasOne(DecisionTree::class);
-    }
-
-    public function accuracy()
-    {
-        return $this->hasOne(AccuracyPrediction::class);
-    }
-
     public function getIsInTransactionAttribute()
     {
         return $this->hasMany(TransactionDetail::class, 'product_id')->exists();

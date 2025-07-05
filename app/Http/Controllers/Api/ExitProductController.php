@@ -136,11 +136,6 @@ class ExitProductController extends Controller
             return response()->json(['success' => false, 'message' => 'Stok produk tidak ditemukan'], 400);
         }
 
-        // Cek apakah stok sebelum dikurangi berjumlah 10 atau kurang
-        // if ($productStock->stock <= 10) {
-        //     return response()->json(['success' => false, 'message' => 'Stok tidak mencukupi (stok saat ini 10 atau kurang)'], 400);
-        // }
-
         // // Cek apakah pengurangan akan menyebabkan stok dibawah 0 atau minus
         if ($productStock->stock - $request->removed_stock < 0) {
             return response()->json(['success' => false, 'message' => 'Pengurangan stok tidak dapat dilakukan karena akan menyebabkan jumlah stok dibawah 0'], 400);

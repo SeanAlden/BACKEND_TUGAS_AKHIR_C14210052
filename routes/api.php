@@ -2,10 +2,9 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\API\AuthController;
+use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\ProductController;
-use App\Http\Controllers\API\AnalysisController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\EmployeeController;
 use App\Http\Controllers\Api\ExitProductController;
@@ -28,8 +27,8 @@ Route::prefix('products')->group(function () {
     // Route::delete('/{id}', [ProductController::class, 'destroy']);
     Route::put('/updateCondition/{id}', [ProductController::class, 'updateCondition']);
     Route::get('/product/{id}/exp-dates', [ProductController::class, 'getExpDates']);
-    // Route::get('/product/{product_id}/total-stock', [ProductController::class, 'getTotalStock']);
-    // Route::get('/product/{product_id}/stock/{exp_date}', [ProductController::class, 'getStockByDate']);
+    Route::get('/product/{product_id}/total-stock', [ProductController::class, 'getTotalStock']);
+    Route::get('/product/{product_id}/stock/{exp_date}', [ProductController::class, 'getStockByDate']);
 });
 
 Route::get('/product-stocks-report', [ProductController::class, 'productStocksReport']);
@@ -41,6 +40,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user-favorites', [ProductController::class, 'getAllFavorites']);
     // Route::get('/favorites', [ProductController::class, 'getFavorites']);
 });
+
+Route::post('/products/{product}/add-exp-date', [ProductController::class, 'addExpireDate']);
+Route::delete('/products/{product}/exp-date/{exp_date}', [ProductController::class, 'destroyExpireDate']);
 
 Route::prefix('categories')->group(function () {
     Route::get('/', [CategoryController::class, 'index']);
@@ -80,17 +82,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/cart/update-field', [CartController::class, 'updateField']);
 });
 
-Route::prefix('analysis')->group(function () {
-    Route::get('/getTransactions', [AnalysisController::class, 'getTransactions']);
-    Route::get('/countAttributes', [AnalysisController::class, 'countAttributes']);
-    Route::get('/results', [AnalysisController::class, 'countAccuracy']);
-});
-
 Route::prefix('entry-products')->group(function () {
     Route::get('/', [EntryProductController::class, 'index']);
     Route::post('/store', [EntryProductController::class, 'store']);
     Route::put('/{id}', [EntryProductController::class, 'update']);
-    Route::delete('/{id}', [EntryProductController::class, 'destroy']);
+    Route::get('/{id}', [EntryProductController::class, 'destroy']);
 });
 
 Route::prefix('exit-products')->group(function () {
@@ -103,7 +99,7 @@ Route::prefix('exit-products')->group(function () {
 Route::prefix('auth')->group(function () {
     // Route::post('/register', [AuthController::class, 'register']);
     Route::post('/signup', [AuthController::class, 'store']);
-    // Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/login', [AuthController::class, 'login']);
     Route::post('/signin', [AuthController::class, 'signin']);
     // Route::get('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
     Route::delete('/signout', action: [AuthController::class, 'destroy'])->middleware('auth:sanctum');

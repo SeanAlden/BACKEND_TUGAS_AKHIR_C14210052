@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('message');
             $table->timestamp('notification_time')->useCurrent();
-            $table->enum('notification_type', ['Produk Terlaris', 'Sisa Stok']);
+            $table->enum('notification_type', ['Sisa Stok']);
             $table->timestamps();
         });        
     }
