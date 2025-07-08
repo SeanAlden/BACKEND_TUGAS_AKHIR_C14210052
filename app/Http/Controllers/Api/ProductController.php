@@ -19,6 +19,7 @@ use App\Models\ProductStatusHistoryDetail;
 
 class ProductController extends Controller
 {
+    // Fungsi untuk menampilkan data produk
     public function index()
     {
         $products = Product::with(['category', 'stocks'])->withCount('transactionDetails')->get();
@@ -53,6 +54,7 @@ class ProductController extends Controller
         ], 200);
     }
 
+    // Fungsi untuk menampilkan data produk yang masih aktif terjual
     public function indexActiveProduct()
     {
         $products = Product::where('condition', 'active')
@@ -66,6 +68,7 @@ class ProductController extends Controller
         ], 200);
     }
 
+    // Fungsi untuk menambahkan produk baru
     public function store(Request $request)
     {
         try {
@@ -129,6 +132,7 @@ class ProductController extends Controller
         }
     }
 
+    // Fungsi untuk menampilkan data detail produk berdasarkan id nya
     public function show($id)
     {
         $product = Product::with(['category', 'stocks'])->find($id);
@@ -146,6 +150,7 @@ class ProductController extends Controller
         ], 200);
     }
 
+    // Fungsi untuk menampilkan data produk berdasarkan kategorinya
     public function showByCategory($category_id)
     {
         $products = Product::with('category', 'stocks')->where('category_id', $category_id)->get();
@@ -163,6 +168,7 @@ class ProductController extends Controller
         ], 200);
     }
 
+    // Fungsi untuk menampilkan data produk aktif berdasarkan kategorinya
     public function showByCategoryActiveProduct($category_id)
     {
         $products = Product::with('category', 'stocks')
@@ -183,6 +189,7 @@ class ProductController extends Controller
         ], 200);
     }
 
+    // Fungsi untuk mengubah data produk
     public function update(Request $request, $id)
     {
         try {
@@ -249,6 +256,7 @@ class ProductController extends Controller
         }
     }
 
+    // Fungsi untuk mengupdate kondisi produk (baik dari aktif menjadi nonaktif, maupun dari nonaktif menjadi aktif)
     public function updateCondition(Request $request, $id)
     {
         $product = Product::with('stocks')->find($id);
@@ -294,6 +302,7 @@ class ProductController extends Controller
         ], 200);
     }
 
+    // Fungsi untuk mendapatkan data tanggal kadaluarsa dari tiap produknya
     public function getExpDates($product_id)
     {
         $exp_dates = ProductStock::where('product_id', $product_id)
@@ -307,6 +316,7 @@ class ProductController extends Controller
         ]);
     }
 
+    // Fungsi untuk mendapatkan data total stok dari tiap produk
     public function getTotalStock($product_id)
     {
         $totalStock = ProductStock::where('product_id', $product_id)->sum('stock');
@@ -314,6 +324,7 @@ class ProductController extends Controller
         return response()->json(['stock' => $totalStock ?? 0]);
     }
 
+    // Fungsi untuk mendapatkan data stok dari tiap tanggal kadaluarsa
     public function getStockByDate($product_id, $exp_date)
     {
         $stock = ProductStock::where('product_id', $product_id)
@@ -323,6 +334,7 @@ class ProductController extends Controller
         return response()->json(['stock' => $stock ? $stock->stock : 0]);
     }
 
+    // Fungsi untuk mendapatkan data laporan barang masuk dan barang keluar  
     public function productStocksReport()
     {
         $entryStocks = DB::table('entry_products')
@@ -365,6 +377,7 @@ class ProductController extends Controller
         ]);
     }
 
+    // Fungsi untuk mendapatkan data produk tidak aktif atau produk yang tidak dijual lagi
     public function getNonactiveProducts()
     {
         $nonactiveHistories = ProductStatusHistory::with('product.category', 'details')
@@ -378,6 +391,7 @@ class ProductController extends Controller
         ]);
     }
 
+    // Fungsi untuk memilih produk favorit
     public function toggleFavorite(Request $request, $productId)
     {
         $user = Auth::user();
@@ -398,6 +412,7 @@ class ProductController extends Controller
         }
     }
 
+    // Fungsi untuk mengecek apakah suatu produk adalah produk favorit atau bukan
     public function checkFavorite($productId)
     {
         $user = Auth::user();
@@ -411,6 +426,7 @@ class ProductController extends Controller
         ]);
     }
 
+    // Fungsi untuk mendapatkan data semua produk favorit dari user
     public function getFavorites(Request $request)
     {
         $user = Auth::user();
@@ -425,6 +441,7 @@ class ProductController extends Controller
         ]);
     }
 
+    // Fungsi untuk mendapatkan data semua produk favorit dari user
     public function getAllFavorites()
     {
         $user = Auth::user();
@@ -438,11 +455,8 @@ class ProductController extends Controller
             'favorites' => $favoriteProducts
         ]);
     }
-
-    /**
-     * Menambahkan tanggal expired baru untuk sebuah produk.
-     * Stok awal akan di-set menjadi 0.
-     */
+    
+    // Fungsi untuk menambahkan tanggal kadaluarsa dari produk yang dituju
     public function addExpireDate(Request $request, Product $product)
     {
         $request->validate([
@@ -471,11 +485,8 @@ class ProductController extends Controller
             'message' => 'Tanggal expired baru berhasil ditambahkan.',
         ]);
     }
-
-    /**
-     * Menghapus record tanggal expired (ProductStock) untuk sebuah produk.
-     * Hanya bisa dilakukan jika stok untuk tanggal tersebut adalah 0.
-     */
+    
+    // Fungsi untuk menghapus tanggal kadaluarsa dari produk terkait
     public function destroyExpireDate(Request $request, Product $product, $exp_date)
     {
         $productStock = ProductStock::where('product_id', $product->id)

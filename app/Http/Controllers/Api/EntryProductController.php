@@ -66,6 +66,7 @@ class EntryProductController extends Controller
     //     return response()->json(['success' => true, 'message' => 'Stok berhasil ditambahkan', 'data' => $entry], 201);
     // }
 
+    // Untuk menambah data stok barang masuk
     public function store(Request $request)
     {
         // Validasi yang lebih fleksibel: exp_date atau new_exp_date harus ada, tapi tidak keduanya.
@@ -138,6 +139,7 @@ class EntryProductController extends Controller
     //     ]);
     // }
 
+    // Menampilkan data barang masuk
     public function index()
     {
         $entries = EntryProduct::with('product')->latest()->get();
@@ -226,6 +228,7 @@ class EntryProductController extends Controller
     //     return response()->json(['success' => true, 'message' => 'Entry produk berhasil diperbarui', 'data' => $entry]);
     // }
 
+    // Untuk mengubah data barang masuk
     public function update(Request $request, $id)
     {
         $validated = $request->validate([
@@ -273,6 +276,7 @@ class EntryProductController extends Controller
         return response()->json(['success' => true, 'message' => 'Entry produk keluar berhasil diperbarui', 'data' => $entry]);
     }
 
+    // Untuk menghapus data barang masuk
     public function destroy($id)
     {
         $entry = EntryProduct::findOrFail($id);

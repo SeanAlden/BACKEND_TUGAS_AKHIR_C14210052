@@ -72,6 +72,7 @@ class CartController extends Controller
     //     ], 200);
     // }
 
+    // Fungsi untuk menambahkan data produk ke keranjang
     public function addToCart(Request $request)
     {
         $request->validate([
@@ -151,6 +152,7 @@ class CartController extends Controller
     //     return response()->json(['success' => true, 'cart' => $cart], 200);
     // }
 
+    // Fungsi untuk update data produk di dalam keranjang 
     public function updateCart(Request $request, $id)
     {
         $user = Auth::user();
@@ -184,6 +186,7 @@ class CartController extends Controller
     //     return response()->json(['success' => true, 'message' => 'Item removed from cart'], 200);
     // }
 
+    // Fungsi untuk menghapus data produk dari keranjang
     public function deleteCart($productId)
     {
         $userId = Auth::id();
@@ -205,6 +208,7 @@ class CartController extends Controller
         return response()->json(['success' => true, 'message' => 'Item berhasil dihapus berdasarkan product_id'], 200);
     }
 
+    // Fungsi untuk melakukan checkout pada biaya produk dalam keranjang
     public function checkout()
     {
         DB::beginTransaction();
@@ -308,6 +312,7 @@ class CartController extends Controller
         }
     }
 
+    // Fungsi untuk menampilkan data keranjang
     public function show()
     {
         $userId = Auth::id(); 
@@ -371,6 +376,7 @@ class CartController extends Controller
         ], 200);
     }
 
+    // Fungsi untuk update metode pengiriman, dan metode pembayaran
     public function updateField(Request $request)
     {
         $user = Auth::user(); // atau sesuaikan dengan otentikasi kamu

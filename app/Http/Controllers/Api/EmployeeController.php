@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Storage;
 
 class EmployeeController extends Controller
 {
+    // Menampilkan data karyawan
     public function index()
     {
         $employees = Employee::all();
@@ -18,6 +19,7 @@ class EmployeeController extends Controller
         ]);
     }
 
+    // Menambah data karyawan
     public function store(Request $request)
     {
         $request->validate([
@@ -53,6 +55,7 @@ class EmployeeController extends Controller
         ], 201);
     }
 
+    // Menampilkan data detail karyawan berdasarkan id nya
     public function show($id)
     {
         $employee = Employee::find($id);
@@ -115,6 +118,7 @@ class EmployeeController extends Controller
     //     ]);
     // }
 
+    // Mengubah data karyawan
     public function update(Request $request, $id)
     {
         $employee = Employee::find($id);
@@ -146,6 +150,7 @@ class EmployeeController extends Controller
         ]);
     }
 
+    // Menghapus data karyawan
     public function destroy($id)
     {
         $employee = Employee::find($id);

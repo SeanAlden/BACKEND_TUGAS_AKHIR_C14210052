@@ -9,12 +9,14 @@ use Illuminate\Support\Facades\Auth;
 
 class CategoryController extends Controller
 {
+    // Menampilkan data kategori
     public function index()
     {
         $categories = Category::with('products')->get();
         return response()->json($categories);
     }
 
+    // Menambahkan data kategori
     public function store(Request $request)
     {
         $request->validate([
@@ -34,6 +36,7 @@ class CategoryController extends Controller
     //     return response()->json($category);
     // }
 
+    // Menampilkan data detail kategori berdasarkan id nya
     public function show($id)
     {
         $category = Category::with(['products.stocks'])->findOrFail($id);
@@ -47,6 +50,7 @@ class CategoryController extends Controller
         return response()->json($category);
     }
 
+    // Mengubah data kategori
     public function update(Request $request, $id)
     {
         $request->validate([
@@ -61,11 +65,12 @@ class CategoryController extends Controller
         return response()->json($category);
     }
 
+    // Menghapus data kategori
     public function destroy($id)
     {
         $category = Category::findOrFail($id);
         if ($category->products()->count() > 0) {
-            return response()->json(['error' => 'Kategori tidak bisa dihapus karena masih digunakan oleh produk!'], 400);
+            return response()->json(['error' => 'Kategori tidak dapat dihapus karena masih digunakan oleh produk!'], 400);
         }
 
         $category->delete();

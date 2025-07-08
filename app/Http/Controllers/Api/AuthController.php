@@ -21,6 +21,7 @@ use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
+    // Fungsi untuk mendaftarkan atau membuat akun baru
     public function register(Request $request)
     {
         //// Validasi data input
@@ -56,6 +57,7 @@ class AuthController extends Controller
         ], 201);
     }
 
+    // Fungsi untuk mendaftarkan atau membuat akun baru
     public function store(Request $request)
     {
         $request->validate([
@@ -80,6 +82,7 @@ class AuthController extends Controller
         return response($reesponse, 201);
     }
 
+    // Fungsi untuk melakukan login 
     public function login(Request $request)
     {
         $request->validate([
@@ -98,6 +101,7 @@ class AuthController extends Controller
         return $user->createToken($request->email)->plainTextToken;
     }
 
+    // Fungsi untuk melakukan login
     public function signin(Request $request)
     {
         $request->validate([
@@ -109,7 +113,7 @@ class AuthController extends Controller
         $user = User::where('email', $request->email)->first();
         if (!$user || !Hash::check($request->password, $user->password)) {
             return response([
-                'message' => 'Bad login crads'
+                'message' => 'Kredensial login salah'
             ], 401); 
         }
         $token = $user->createToken('auth_token')->plainTextToken;
@@ -120,6 +124,7 @@ class AuthController extends Controller
         return response($response, 201);
     }
 
+    // Fungsi untuk melakukan logout
     public function logout(Request $request)
     {
         // Jika menggunakan Sanctum (token-based auth)
@@ -131,6 +136,7 @@ class AuthController extends Controller
         ]);
     }
 
+    // Fungsi untuk melakukan logout
     public function destroy(Request $request)
     {
         auth()->user()->tokens()->delete();
@@ -171,6 +177,7 @@ class AuthController extends Controller
         ]);
     }
 
+    // Fungsi untuk mengupdate data profil
     public function updateProfile(Request $request)
     {
         // /**
@@ -197,6 +204,7 @@ class AuthController extends Controller
         ]);
     }
 
+    // Fungsi untuk mengupdate data password
     public function updatePassword(Request $request)
     {
         // /**
@@ -246,6 +254,7 @@ class AuthController extends Controller
     //     return response()->json(['error' => 'No image uploaded'], 400);
     // }
 
+    // Fungsi untuk mengupdate gambar profil
     public function updateProfileImage(Request $request)
     {
         // /**
@@ -295,6 +304,8 @@ class AuthController extends Controller
     //         'profile_image' => null,
     //     ], 404);
     // }
+
+    // Fungsi untuk mendapatkan data gambar profil
     public function getProfileImage(Request $request)
     {
         $user = Auth::user();
@@ -304,7 +315,7 @@ class AuthController extends Controller
         ], 200);
     }
 
-    // Step 1: Kirim kode verifikasi ke email
+    // Mengirim kode verifikasi ke email
     public function getVerificationCode(Request $request)
     {
         $request->validate([
@@ -330,7 +341,7 @@ class AuthController extends Controller
         return response()->json(['message' => 'Reset code sent to email.']);
     }
 
-    // Step 2: Verifikasi kode dari user
+    // Melakukan verifikasi kode dari inputan user
     public function validateVerificationCode(Request $request)
     {
         $request->validate([
@@ -356,7 +367,7 @@ class AuthController extends Controller
         return response()->json(['message' => 'Code verified']);
     }
 
-    // Step 3: Simpan password baru
+    // Fungsi untuk menyimpan password baru
     public function resetPassword(Request $request)
     {
         $request->validate([

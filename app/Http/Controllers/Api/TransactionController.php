@@ -56,6 +56,7 @@ class TransactionController extends Controller
     //     }
     // }
 
+    // Menampilkan semua transaksi milik user yang login
     public function index()
     {
         try {
@@ -94,7 +95,6 @@ class TransactionController extends Controller
             return response()->json(['error' => 'Terjadi kesalahan saat mengambil data transaksi: ' . $e->getMessage()], 500);
         }
     }
-
 
     // Menampilkan detail transaksi berdasarkan ID dan user
     // public function show($id)
@@ -158,6 +158,7 @@ class TransactionController extends Controller
     //     }
     // }
 
+    // Menampilkan detail transaksi berdasarkan ID dan user
     public function show($id)
     {
         try {
@@ -246,6 +247,7 @@ class TransactionController extends Controller
     //     return response()->json(['message' => 'Status transaksi berhasil diperbarui.'], 200);
     // }
 
+    // Fungsi untuk menambah riwayat status transaksi
     public function addStatus(Request $request, $id)
     {
         $request->validate([
@@ -371,6 +373,7 @@ class TransactionController extends Controller
     //     return response()->json(['message' => 'Status riwayat berhasil dihapus dan status transaksi diperbarui.']);
     // }
 
+    // Fungsi untuk menghapus status transaksi
     public function deleteStatus(Request $request, $id)
     {
         $statusHistory = TransactionStatusHistory::findOrFail($id);
@@ -432,7 +435,7 @@ class TransactionController extends Controller
     //     return response()->json($statuses);
     // }
 
-    // Fungsi Final Save
+    // Fungsi Final Save dari riwayat status transaksi yang terjadi
     public function finalSave($id)
     {
         $user = Auth::user();
@@ -453,6 +456,7 @@ class TransactionController extends Controller
         return response()->json(['message' => 'Transaksi berhasil difinalisasi. Tidak dapat diubah lagi.'], 200);
     }
 
+    // Mengecek apakah status terakhir transaksi sudah selesai atau belum
     public function checkFinalStatus($id)
     {
         $user = Auth::user();
@@ -465,101 +469,102 @@ class TransactionController extends Controller
         ]);
     }
 
-    public function adminShow()
-    {
-        try {
-            $transactions = Transaction::with(['details.product', 'statusHistories'])
-                ->get();
+    // public function adminShow()
+    // {
+    //     try {
+    //         $transactions = Transaction::with(['details.product', 'statusHistories'])
+    //             ->get();
 
-            // Tambahkan estimasi shipping_time untuk setiap transaksi
-            // $transactions = $transactions->map(function ($transaction) {
-            //     $transaction->shipping_time = $this->calculateShippingTime($transaction);
-            //     return $transaction;
-            // });
+    //         // Tambahkan estimasi shipping_time untuk setiap transaksi
+    //         // $transactions = $transactions->map(function ($transaction) {
+    //         //     $transaction->shipping_time = $this->calculateShippingTime($transaction);
+    //         //     return $transaction;
+    //         // });
 
-            $transactions = $transactions->map(function ($transaction) {
-                $transaction->shipping_time = $this->calculateShippingTime($transaction);
+    //         $transactions = $transactions->map(function ($transaction) {
+    //             $transaction->shipping_time = $this->calculateShippingTime($transaction);
 
-                $transaction->products = $transaction->details->map(function ($detail) {
-                    return [
-                        'product_id' => $detail->product->id,
-                        'name' => $detail->product->name,
-                        'code' => $detail->product->code,
-                        'price' => $detail->product->price,
-                        'quantity' => $detail->quantity,
-                        'exp_date' => $detail->exp_date,
-                        'photo' => $detail->product->photo,
-                        // 'photo' => url('storage/' . $detail->product->photo),
-                    ];
-                });
+    //             $transaction->products = $transaction->details->map(function ($detail) {
+    //                 return [
+    //                     'product_id' => $detail->product->id,
+    //                     'name' => $detail->product->name,
+    //                     'code' => $detail->product->code,
+    //                     'price' => $detail->product->price,
+    //                     'quantity' => $detail->quantity,
+    //                     'exp_date' => $detail->exp_date,
+    //                     'photo' => $detail->product->photo,
+    //                     // 'photo' => url('storage/' . $detail->product->photo),
+    //                 ];
+    //             });
 
-                return $transaction;
-            });
+    //             return $transaction;
+    //         });
 
-            return response()->json(['transactions' => $transactions], 200);
-        } catch (\Exception $e) {
-            return response()->json(['error' => 'Terjadi kesalahan saat mengambil data transaksi: ' . $e->getMessage()], 500);
-        }
-    }
+    //         return response()->json(['transactions' => $transactions], 200);
+    //     } catch (\Exception $e) {
+    //         return response()->json(['error' => 'Terjadi kesalahan saat mengambil data transaksi: ' . $e->getMessage()], 500);
+    //     }
+    // }
 
-    public function adminDetailShow($id)
-    {
-        try {
-            $transaction = Transaction::with(['details.product', 'statusHistories', 'user'])
-                ->where('id', $id)
-                ->firstOrFail();
+    // Fungsi untuk menampilkan data 
+    // public function adminDetailShow($id)
+    // {
+    //     try {
+    //         $transaction = Transaction::with(['details.product', 'statusHistories', 'user'])
+    //             ->where('id', $id)
+    //             ->firstOrFail();
 
-            $transaction->shipping_time = $this->calculateShippingTime($transaction);
+    //         $transaction->shipping_time = $this->calculateShippingTime($transaction);
 
-            $details = $transaction->products = $transaction->details->map(function ($detail) {
-                return [
-                    // 'product_id' => $detail->product->id,
-                    // 'product_name' => $detail->product->name,
-                    // 'product_code' => $detail->product->code,
-                    // 'product_price' => $detail->product->price,
-                    // 'quantity' => $detail->quantity,
-                    // 'stock_before' => $detail->stock_before,
-                    // 'stock_after' => $detail->stock_after,
-                    // 'exp_date' => $detail->exp_date,
-                    // 'photo' => $detail->product->photo,
+    //         $details = $transaction->products = $transaction->details->map(function ($detail) {
+    //             return [
+    //                 // 'product_id' => $detail->product->id,
+    //                 // 'product_name' => $detail->product->name,
+    //                 // 'product_code' => $detail->product->code,
+    //                 // 'product_price' => $detail->product->price,
+    //                 // 'quantity' => $detail->quantity,
+    //                 // 'stock_before' => $detail->stock_before,
+    //                 // 'stock_after' => $detail->stock_after,
+    //                 // 'exp_date' => $detail->exp_date,
+    //                 // 'photo' => $detail->product->photo,
 
-                    'id' => $detail->id,
-                    'transaction_id' => $detail->transaction_id,
-                    'product_id' => $detail->product_id,
-                    'quantity' => $detail->quantity,
-                    'exp_date' => $detail->exp_date,
-                    'product_name' => $detail->product_name,
-                    'product_code' => $detail->product_code,
-                    'product_price' => $detail->product_price,
-                    'product_photo' => $detail->product->photo,
-                    // 'product_photo' => $detail->product_photo,
-                    'stock_before' => $detail->stock_before,
-                    'stock_after' => $detail->stock_after,
-                ];
-            });
+    //                 'id' => $detail->id,
+    //                 'transaction_id' => $detail->transaction_id,
+    //                 'product_id' => $detail->product_id,
+    //                 'quantity' => $detail->quantity,
+    //                 'exp_date' => $detail->exp_date,
+    //                 'product_name' => $detail->product_name,
+    //                 'product_code' => $detail->product_code,
+    //                 'product_price' => $detail->product_price,
+    //                 'product_photo' => $detail->product->photo,
+    //                 // 'product_photo' => $detail->product_photo,
+    //                 'stock_before' => $detail->stock_before,
+    //                 'stock_after' => $detail->stock_after,
+    //             ];
+    //         });
 
-            return response()->json([
-                'transaction' => [
-                    'id' => $transaction->id,
-                    'user_id' => $transaction->user_id,
-                    'user_name' => $transaction->user->name,
-                    'transaction_code' => $transaction->transaction_code,
-                    'status' => $transaction->status,
-                    'gross_amount' => $transaction->gross_amount,
-                    'shipping_cost' => $transaction->shipping_cost,
-                    'total_payment' => $transaction->total_payment,
-                    'shipping_method' => $transaction->shipping_method,
-                    'payment_method' => $transaction->payment_method,
-                    'shipping_time' => $this->calculateShippingTime($transaction),
-                    'transaction_date' => $transaction->transaction_date,
-                ],
-                'products' => $details,
-                'status_histories' => $transaction->statusHistories
-            ], 200);
-        } catch (\Exception $e) {
-            return response()->json(['error' => 'Transaksi tidak ditemukan atau Anda tidak memiliki akses.'], 404);
-        }
-    }
+    //         return response()->json([
+    //             'transaction' => [
+    //                 'id' => $transaction->id,
+    //                 'user_id' => $transaction->user_id,
+    //                 'user_name' => $transaction->user->name,
+    //                 'transaction_code' => $transaction->transaction_code,
+    //                 'status' => $transaction->status,
+    //                 'gross_amount' => $transaction->gross_amount,
+    //                 'shipping_cost' => $transaction->shipping_cost,
+    //                 'total_payment' => $transaction->total_payment,
+    //                 'shipping_method' => $transaction->shipping_method,
+    //                 'payment_method' => $transaction->payment_method,
+    //                 'shipping_time' => $this->calculateShippingTime($transaction),
+    //                 'transaction_date' => $transaction->transaction_date,
+    //             ],
+    //             'products' => $details,
+    //             'status_histories' => $transaction->statusHistories
+    //         ], 200);
+    //     } catch (\Exception $e) {
+    //         return response()->json(['error' => 'Transaksi tidak ditemukan atau Anda tidak memiliki akses.'], 404);
+    //     }
+    // }
 
     // Fungsi bantu untuk estimasi waktu pengiriman
     private function calculateShippingTime($transaction)
@@ -594,6 +599,7 @@ class TransactionController extends Controller
         // return 'Waktu Pengiriman : ' . $start->translatedFormat('d F Y, H:i') . ' - ' . $end->translatedFormat('H:i');
     }
 
+    // Untuk menampilkan data pada dashboard
     public function dashboard(Request $request)
     {
         $monthName = $request->input('month', Carbon::now()->locale('id')->translatedFormat('F'));

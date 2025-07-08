@@ -8,7 +8,7 @@ use Illuminate\Routing\Controller;
 
 class NotificationController extends Controller
 {
-    //
+
     // Menampilkan semua notifikasi
     public function index()
     {
@@ -16,6 +16,7 @@ class NotificationController extends Controller
         return response()->json($notifications);
     }
 
+    // Menandai notifikasi telah dibaca
     public function read($id)
     {
         $notification = Notification::find($id);

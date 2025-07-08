@@ -118,6 +118,7 @@ class ExitProductController extends Controller
     //     return response()->json(['success' => true, 'message' => 'Stok berhasil dikurangi', 'data' => $exit], 201);
     // }
 
+    // Untuk menambah data barang keluar
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -161,6 +162,8 @@ class ExitProductController extends Controller
 
         return response()->json(['success' => true, 'message' => 'Stok berhasil dikurangi', 'data' => $exit], 201);
     }
+
+    // Untuk menampilkan data barang keluar
     public function index()
     {
         return response()->json([
@@ -306,6 +309,7 @@ class ExitProductController extends Controller
     //     return response()->json(['success' => true, 'message' => 'Entry produk keluar berhasil diperbarui', 'data' => $exit]);
     // }
 
+    // Untuk mengubah data barang keluar
     public function update(Request $request, $id)
     {
         $validated = $request->validate([
@@ -363,6 +367,7 @@ class ExitProductController extends Controller
         return response()->json(['success' => true, 'message' => 'Entry produk keluar berhasil diperbarui', 'data' => $exit]);
     }
 
+    // Untuk menghapus data barang keluar
     public function destroy($id)
     {
         $exit = ExitProduct::findOrFail($id);
