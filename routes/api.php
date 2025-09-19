@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\AnalysisController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\EmployeeController;
 use App\Http\Controllers\Api\ExitProductController;
@@ -41,7 +42,10 @@ Route::middleware('auth:sanctum')->group(function () {
     // Route::get('/favorites', [ProductController::class, 'getFavorites']);
 });
 
+// BARU: Route untuk menambahkan tanggal expired baru ke produk
 Route::post('/products/{product}/add-exp-date', [ProductController::class, 'addExpireDate']);
+
+// BARU: Route untuk menghapus tanggal expired dari sebuah produk
 Route::delete('/products/{product}/exp-date/{exp_date}', [ProductController::class, 'destroyExpireDate']);
 
 Route::prefix('categories')->group(function () {
@@ -80,6 +84,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/cart/checkout', [CartController::class, 'checkout']);
     Route::get('/cart/show', [CartController::class, 'show']);
     Route::patch('/cart/update-field', [CartController::class, 'updateField']);
+});
+
+Route::prefix('analysis')->group(function () {
+    Route::get('/getTransactions', [AnalysisController::class, 'getTransactions']);
+    Route::get('/countAttributes', [AnalysisController::class, 'countAttributes']);
+    Route::get('/results', [AnalysisController::class, 'countAccuracy']);
 });
 
 Route::prefix('entry-products')->group(function () {
