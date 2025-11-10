@@ -18,6 +18,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'verified' => \App\Http\Middleware\EnsureEmailIsVerified::class,
         ]);
 
+        $middleware->api(prepend: [
+            \Illuminate\Http\Middleware\HandleCors::class,
+        ]);
+
         // Tambahkan middleware yang diperlukan
         // $middleware->append(EnsureFrontendRequestsAreStateful::class);
         // $middleware->append(HandleCors::class);
