@@ -21,6 +21,7 @@ return [
 
     'allowed_origins' => ['https://asiaraya.netlify.app'],
     // 'allowed_origins' => ['http://127.0.0.1:3000'],
+    // 'allowed_origins' => ['http://127.0.0.1:3000'],
 
     'allowed_origins_patterns' => [],
 
