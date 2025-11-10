@@ -1,0 +1,26 @@
+{
+    "name": "backend_tugas_akhir_c114210052",
+    "version": "1.0.0",
+    "description": "<p align=\"center\"><a href=\"https://laravel.com\" target=\"_blank\"><img src=\"https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg\" width=\"400\" alt=\"Laravel Logo\"></a></p>",
+    "main": "index.js",
+    "directories": {
+        "test": "tests"
+    },
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "dev": "vite",
+        "build": "vite build"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/SeanAlden/BACKEND_TUGAS_AKHIR_C14210052.git"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "type": "commonjs",
+    "bugs": {
+        "url": "https://github.com/SeanAlden/BACKEND_TUGAS_AKHIR_C14210052/issues"
+    },
+    "homepage": "https://github.com/SeanAlden/BACKEND_TUGAS_AKHIR_C14210052#readme"
+}
