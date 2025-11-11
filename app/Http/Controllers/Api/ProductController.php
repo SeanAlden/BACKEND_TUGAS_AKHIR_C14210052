@@ -95,6 +95,7 @@ class ProductController extends Controller
             //     ? $request->file('photo')->store('product_photos', 'public')
             //     : null;
 
+            // Ganti Baru
             $photoPath = $request->hasFile('photo')
                 ? $request->file('photo')->store('product_photos', [
                     'disk' => 's3',
