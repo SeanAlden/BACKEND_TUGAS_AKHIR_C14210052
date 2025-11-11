@@ -91,15 +91,21 @@ class ProductController extends Controller
                 ], 422);
             }
 
+            // $photoPath = $request->hasFile('photo')
+            //     ? $request->file('photo')->store('product_photos', 'public')
+            //     : null;
+
             $photoPath = $request->hasFile('photo')
-                ? $request->file('photo')->store('product_photos', 'public')
+                ? $request->file('photo')->store('product_photos', 's3')
                 : null;
+
+            $photoUrl = $photoPath ? Storage::disk('s3')->url($photoPath) : null;
 
             $product = Product::create([
                 'code' => $request->code,
                 'name' => $request->name,
                 'price' => $request->price,
-                'photo' => $photoPath,
+                'photo' => $photoUrl,
                 'description' => $request->description,
                 'category_id' => $request->category_id
             ]);
@@ -208,11 +214,20 @@ class ProductController extends Controller
             ]);
 
             if ($request->hasFile('photo')) {
-                if ($product->photo && \Storage::disk('public')->exists($product->photo)) {
-                    \Storage::disk('public')->delete($product->photo);
+                // if ($product->photo && \Storage::disk('public')->exists($product->photo)) {
+                //     \Storage::disk('public')->delete($product->photo);
+                // }
+
+                // Hapus file lama dari S3
+                if ($product->photo) {
+                    $oldPath = str_replace(Storage::disk('s3')->url(''), '', $product->photo);
+                    Storage::disk('s3')->delete($oldPath);
                 }
 
-                $photoPath = $request->file('photo')->store('product_photos', 'public');
+                // $photoPath = $request->file('photo')->store('product_photos', 'public');
+
+                $photoPath = $request->file('photo')->store('product_photos', 's3');
+                $photoUrl = Storage::disk('s3')->url($photoPath);
             } else {
                 $photoPath = $product->photo;
             }
@@ -221,7 +236,7 @@ class ProductController extends Controller
                 'code' => $request->code,
                 'name' => $request->name,
                 'price' => $request->price,
-                'photo' => $photoPath,
+                'photo' => $photoUrl,
                 'description' => $request->description,
                 'category_id' => $request->category_id
             ]);
@@ -455,7 +470,7 @@ class ProductController extends Controller
             'favorites' => $favoriteProducts
         ]);
     }
-    
+
     // Fungsi untuk menambahkan tanggal kadaluarsa dari produk yang dituju
     public function addExpireDate(Request $request, Product $product)
     {
@@ -485,7 +500,7 @@ class ProductController extends Controller
             'message' => 'Tanggal expired baru berhasil ditambahkan.',
         ]);
     }
-    
+
     // Fungsi untuk menghapus tanggal kadaluarsa dari produk terkait
     public function destroyExpireDate(Request $request, Product $product, $exp_date)
     {
