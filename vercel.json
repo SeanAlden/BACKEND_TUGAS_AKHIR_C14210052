@@ -2,7 +2,12 @@
     "version": 2,
     "framework": null,
     "functions": {
-        "api/index.php": { "runtime": "vercel-php@0.7.4" }
+        "api/index.php": {
+            "runtime": "vercel-php@0.7.4",
+            "maxDuration": 10,
+            "memory": 1024,
+            "maxBytes": 10000000
+        }
     },
     "routes": [
         { "src": "/api/(.*)", "dest": "/api/index.php" },
