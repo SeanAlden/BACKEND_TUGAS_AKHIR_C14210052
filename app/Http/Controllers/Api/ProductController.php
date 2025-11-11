@@ -96,7 +96,10 @@ class ProductController extends Controller
             //     : null;
 
             $photoPath = $request->hasFile('photo')
-                ? $request->file('photo')->store('product_photos', 's3')
+                ? $request->file('photo')->store('product_photos', [
+                    'disk' => 's3',
+                    'visibility' => 'public',
+                ])
                 : null;
 
             $photoUrl = $photoPath ? Storage::disk('s3')->url($photoPath) : null;
@@ -226,7 +229,10 @@ class ProductController extends Controller
 
                 // $photoPath = $request->file('photo')->store('product_photos', 'public');
 
-                $photoPath = $request->file('photo')->store('product_photos', 's3');
+                $photoPath = $request->file('photo')->store('product_photos', [
+                    'disk' => 's3',
+                    'visibility' => 'public',
+                ]);
                 $photoUrl = Storage::disk('s3')->url($photoPath);
             } else {
                 $photoPath = $product->photo;
