@@ -1,12 +1,18 @@
 {
     "version": 2,
+    "builds": [
+        {
+            "src": "api/index.php",
+            "use": "@vercel/php",
+            "config": {
+                "phpIni": "api/php.ini"
+            }
+        }
+    ],
     "framework": null,
     "functions": {
         "api/index.php": {
-            "runtime": "vercel-php@0.7.4",
-            "maxDuration": 10,
-            "memory": 1024,
-            "maxBytes": 10000000
+            "runtime": "vercel-php@0.7.4"
         }
     },
     "routes": [
