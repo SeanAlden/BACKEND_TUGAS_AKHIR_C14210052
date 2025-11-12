@@ -195,6 +195,12 @@ class ProductController extends Controller
                 ]);
             }
 
+            Log::info('Photo upload debug', [
+                'hasFile' => $request->hasFile('photo'),
+                'photoPath' => $photoPath ?? 'NULL',
+                'photoUrl' => $photoUrl ?? 'NULL',
+            ]);
+
             return response()->json([
                 'success' => true,
                 'message' => 'Produk berhasil ditambahkan!',
