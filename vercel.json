@@ -1,17 +1,11 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "api/index.php",
-      "use": "@vercel/php",
-      "config": {
-        "phpIni": "api/php.ini"
-      }
+  "functions": {
+    "api/index.php": {
+      "runtime": "vercel-php@0.7.4"
     }
-  ],
-  "framework": null,
+  },
   "routes": [
-    { "src": "/api/(.*)", "dest": "/api/index.php" },
     { "src": "/(.*)", "dest": "/api/index.php" }
   ],
   "env": {
