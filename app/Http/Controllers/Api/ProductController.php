@@ -109,7 +109,8 @@ class ProductController extends Controller
                 'code' => $request->code,
                 'name' => $request->name,
                 'price' => $request->price,
-                'photo' => $photoUrl,
+                // 'photo' => $photoUrl,
+                'photo' => $photoPath,
                 'description' => $request->description,
                 'category_id' => $request->category_id
             ]);
@@ -243,7 +244,8 @@ class ProductController extends Controller
                 'code' => $request->code,
                 'name' => $request->name,
                 'price' => $request->price,
-                'photo' => $photoUrl,
+                // 'photo' => $photoUrl,
+                'photo' => $photoPath,
                 'description' => $request->description,
                 'category_id' => $request->category_id
             ]);
