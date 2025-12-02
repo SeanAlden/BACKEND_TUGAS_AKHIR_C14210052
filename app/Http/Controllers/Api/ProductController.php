@@ -166,17 +166,27 @@ class ProductController extends Controller
             }
 
             // Simpan foto ke S3
-            $photoPath = $request->hasFile('photo')
-                ? $request->file('photo')->store('product_photos', [
-                    'disk' => 's3',
-                    'visibility' => 'public',
-                ])
-                : null;
+            // $photoPath = $request->hasFile('photo')
+            //     ? $request->file('photo')->store('product_photos', [
+            //         'disk' => 's3',
+            //         'visibility' => 'public',
+            //     ])
+            //     : null;
+
+            // Simpan foto ke S3
+            $photoPath = null;
+            if ($request->hasFile('photo')) {
+                // Gunakan storePublicly untuk memastikan visibility public diatur dengan benar
+                $photoPath = $request->file('photo')->storePublicly('product_photos', 's3');
+            }
 
             // Bangun URL secara manual agar path lengkap
-            $photoUrl = $photoPath
-                ? rtrim(env('AWS_URL'), '/') . '/' . ltrim($photoPath, '/')
-                : null;
+            // $photoUrl = $photoPath
+            //     ? rtrim(env('AWS_URL'), '/') . '/' . ltrim($photoPath, '/')
+            //     : null;
+
+            // Dapatkan URL lengkap otomatis dari driver S3
+            $photoUrl = $photoPath ? Storage::disk('s3')->url($photoPath) : null;
 
             $product = Product::create([
                 'code' => $request->code,
