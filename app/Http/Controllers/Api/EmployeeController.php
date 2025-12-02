@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Models\Employee;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 
@@ -69,21 +70,50 @@ class EmployeeController extends Controller
         ]);
 
         // Upload Cloudinary
-        if ($request->hasFile('employee_photo')) {
-            $upload = Cloudinary::upload(
-                $request->file('employee_photo')->getRealPath(),
-                ['folder' => 'employees']
-            );
+        // if ($request->hasFile('employee_photo')) {
+        //     $upload = Cloudinary::upload(
+        //         $request->file('employee_photo')->getRealPath(),
+        //         ['folder' => 'employees']
+        //     );
 
-            $photoUrl = $upload->getSecurePath(); // URL HTTPS
-        } else {
-            $photoUrl = null;
+        //     $photoUrl = $upload->getSecurePath(); // URL HTTPS
+        // } else {
+        //     $photoUrl = null;
+        // }
+
+        if ($request->hasFile('photo')) {
+            try {
+                $file = $request->file('photo');
+                $response = Http::asMultipart()->post(
+                    'https://api.cloudinary.com/v1_1/' . env('CLOUDINARY_CLOUD_NAME') . '/image/upload',
+                    [
+                        [
+                            'name' => 'file',
+                            'contents' => fopen($file->getRealPath(), 'r'),
+                            'filename' => $file->getClientOriginalName(),
+                        ],
+                        [
+                            'name' => 'upload_preset',
+                            'contents' => env('CLOUDINARY_UPLOAD_PRESET'),
+                        ],
+                    ]
+                );
+
+                $result = $response->json();
+                if (isset($result['secure_url'])) {
+                    $input['photo'] = $result['secure_url'];
+                } else {
+                    return back()->withErrors(['photo' => 'Cloudinary upload error: ' . ($result['error']['message'] ?? 'Unknown error')]);
+                }
+            } catch (\Exception $e) {
+                return back()->withErrors(['photo' => 'Cloudinary error: ' . $e->getMessage()]);
+            }
         }
 
         $employee = Employee::create([
             'code' => $request->code,
             'employee_name' => $request->employee_name,
-            'employee_photo' => $photoUrl,
+            'employee_photo' => $result,
             'employee_position' => $request->employee_position,
             'employee_birth' => $request->employee_birth,
             'employee_contact' => $request->employee_contact,
@@ -207,13 +237,40 @@ class EmployeeController extends Controller
 
         if ($request->hasFile('employee_photo')) {
 
-            // Upload foto baru ke Cloudinary
-            $upload = Cloudinary::upload(
-                $request->file('employee_photo')->getRealPath(),
-                ['folder' => 'employees']
-            );
+            // // Upload photo baru ke Cloudinary
+            // $upload = Cloudinary::upload(
+            //     $request->file('employee_photo')->getRealPath(),
+            //     ['folder' => 'employees']
+            // );
 
-            $data['employee_photo'] = $upload->getSecurePath();
+            try {
+                $file = $request->file('employee_photo');
+                $response = Http::asMultipart()->post(
+                    'https://api.cloudinary.com/v1_1/' . env('CLOUDINARY_CLOUD_NAME') . '/image/upload',
+                    [
+                        [
+                            'name' => 'file',
+                            'contents' => fopen($file->getRealPath(), 'r'),
+                            'filename' => $file->getClientOriginalName(),
+                        ],
+                        [
+                            'name' => 'upload_preset',
+                            'contents' => env('CLOUDINARY_UPLOAD_PRESET'),
+                        ],
+                    ]
+                );
+
+                $result = $response->json();
+                if (isset($result['secure_url'])) {
+                    $input['employee_photo'] = $result['secure_url'];
+                } else {
+                    return back()->withErrors(['employee_photo' => 'Cloudinary upload error: ' . ($result['error']['message'] ?? 'Unknown error')]);
+                }
+            } catch (\Exception $e) {
+                return back()->withErrors(['employee_photo' => 'Cloudinary error: ' . $e->getMessage()]);
+            }
+
+            $data['employee_photo'] = $result->getSecurePath();
         }
 
         $employee->update($data);
