@@ -11,6 +11,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Http;
 use App\Http\Controllers\Controller;
 use App\Models\ProductStatusHistory;
 use Illuminate\Support\Facades\Auth;
@@ -247,23 +248,53 @@ class ProductController extends Controller
                 'stocks.*.stock' => 'required|numeric|min:0'
             ]);
 
-            if ($request->hasFile('photo')) {
-                // Upload ke Cloudinary
-                $uploadedFile = Cloudinary::upload(
-                    $request->file('photo')->getRealPath(),
-                    ['folder' => 'product_photos']
-                );
+            // if ($request->hasFile('photo')) {
+            //     // Upload ke Cloudinary
+            //     $uploadedFile = Cloudinary::upload(
+            //         $request->file('photo')->getRealPath(),
+            //         ['folder' => 'product_photos']
+            //     );
 
-                $photoUrl = $uploadedFile->getSecurePath();
-            } else {
-                $photoUrl = null;
+            //     $photoUrl = $uploadedFile->getSecurePath();
+            // } else {
+            //     $photoUrl = null;
+            // }
+
+            if ($request->hasFile('photo')) {
+                try {
+                    $file = $request->file('photo');
+                    $response = Http::asMultipart()->post(
+                        'https://api.cloudinary.com/v1_1/' . env('CLOUDINARY_CLOUD_NAME') . '/image/upload',
+                        [
+                            [
+                                'name' => 'file',
+                                'contents' => fopen($file->getRealPath(), 'r'),
+                                'filename' => $file->getClientOriginalName(),
+                            ],
+                            [
+                                'name' => 'upload_preset',
+                                'contents' => env('CLOUDINARY_UPLOAD_PRESET'),
+                            ],
+                        ]
+                    );
+
+                    $result = $response->json();
+                    if (isset($result['secure_url'])) {
+                        $input['foto'] = $result['secure_url'];
+                    } else {
+                        return back()->withErrors(['foto' => 'Cloudinary upload error: ' . ($result['error']['message'] ?? 'Unknown error')]);
+                    }
+                } catch (\Exception $e) {
+                    return back()->withErrors(['foto' => 'Cloudinary error: ' . $e->getMessage()]);
+                }
             }
 
             $product = Product::create([
                 'code' => $request->code,
                 'name' => $request->name,
                 'price' => $request->price,
-                'photo' => $photoUrl,
+                // 'photo' => $photoUrl,
+                'photo' => $result,
                 'description' => $request->description,
                 'category_id' => $request->category_id
             ]);
