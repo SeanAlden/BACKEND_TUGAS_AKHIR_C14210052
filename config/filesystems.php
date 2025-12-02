@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'default' => env('FILESYSTEM_DISK', 's3'),
+    'default' => env('FILESYSTEM_DISK', 'local'),
 
     /*
     |--------------------------------------------------------------------------
@@ -38,24 +38,10 @@ return [
             'report' => false,
         ],
 
-        // 'public' => [
-        //     'driver' => 'local',
-        //     'root' => storage_path('app/public'),
-        //     'url' => env('APP_URL') . '/storage',
-        //     'visibility' => 'public',
-        //     'throw' => false,
-        //     'report' => false,
-        // ],
-
         'public' => [
-            // 'driver' => 'local',
-            // 'root' => storage_path('app/public'),
-            // 'url' => env('APP_URL') . '/storage',
-            // 'visibility' => 'public',
-
             'driver' => 'local',
             'root' => storage_path('app/public'),
-            'url' => null, // <-- tambahkan ini
+            'url' => env('APP_URL') . '/storage',
             'visibility' => 'public',
             'throw' => false,
             'report' => false,
