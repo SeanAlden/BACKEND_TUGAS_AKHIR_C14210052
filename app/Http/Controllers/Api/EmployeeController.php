@@ -21,40 +21,40 @@ class EmployeeController extends Controller
     }
 
     // Menambah data karyawan
-    public function store(Request $request)
-    {
-        $request->validate([
-            'code' => 'required|unique:employees|string|max:255',
-            'employee_name' => 'required|string|max:255',
-            'employee_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'employee_position' => 'required|string|max:255',
-            'employee_birth' => 'required|date',
-            'employee_contact' => 'required|numeric',
-            'employee_description' => 'required|string',
-        ]);
+    // public function store(Request $request)
+    // {
+    //     $request->validate([
+    //         'code' => 'required|unique:employees|string|max:255',
+    //         'employee_name' => 'required|string|max:255',
+    //         'employee_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+    //         'employee_position' => 'required|string|max:255',
+    //         'employee_birth' => 'required|date',
+    //         'employee_contact' => 'required|numeric',
+    //         'employee_description' => 'required|string',
+    //     ]);
 
-        if ($request->hasFile('employee_photo')) {
-            $photoPath = $request->file('employee_photo')->store('employees', 'public');
-        } else {
-            $photoPath = null;
-        }
+    //     if ($request->hasFile('employee_photo')) {
+    //         $photoPath = $request->file('employee_photo')->store('employees', 'public');
+    //     } else {
+    //         $photoPath = null;
+    //     }
 
-        $employee = Employee::create([
-            'code' => $request->code,
-            'employee_name' => $request->employee_name,
-            'employee_photo' => $photoPath,
-            'employee_position' => $request->employee_position,
-            'employee_birth' => $request->employee_birth,
-            'employee_contact' => $request->employee_contact,
-            'employee_description' => $request->employee_description,
-        ]);
+    //     $employee = Employee::create([
+    //         'code' => $request->code,
+    //         'employee_name' => $request->employee_name,
+    //         'employee_photo' => $photoPath,
+    //         'employee_position' => $request->employee_position,
+    //         'employee_birth' => $request->employee_birth,
+    //         'employee_contact' => $request->employee_contact,
+    //         'employee_description' => $request->employee_description,
+    //     ]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Employee created successfully',
-            'data' => $employee
-        ], 201);
-    }
+    //     return response()->json([
+    //         'success' => true,
+    //         'message' => 'Employee created successfully',
+    //         'data' => $employee
+    //     ], 201);
+    // }
 
     // public function store(Request $request)
     // {
