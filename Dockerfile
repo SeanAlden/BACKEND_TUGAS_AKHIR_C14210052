@@ -17,7 +17,7 @@ COPY . .
 RUN composer install --no-dev --optimize-autoloader
 
 # Optimize Laravel
-RUN php artisan key:generate --force
+# RUN php artisan key:generate --force
 RUN php artisan storage:link || true
 RUN php artisan config:cache
 RUN php artisan route:cache
