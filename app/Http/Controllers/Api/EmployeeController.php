@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Api;
 use App\Models\Employee;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 
@@ -22,41 +21,6 @@ class EmployeeController extends Controller
     }
 
     // Menambah data karyawan
-    // public function store(Request $request)
-    // {
-    //     $request->validate([
-    //         'code' => 'required|unique:employees|string|max:255',
-    //         'employee_name' => 'required|string|max:255',
-    //         'employee_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-    //         'employee_position' => 'required|string|max:255',
-    //         'employee_birth' => 'required|date',
-    //         'employee_contact' => 'required|numeric',
-    //         'employee_description' => 'required|string',
-    //     ]);
-
-    //     if ($request->hasFile('employee_photo')) {
-    //         $photoPath = $request->file('employee_photo')->store('employees', 'public');
-    //     } else {
-    //         $photoPath = null;
-    //     }
-
-    //     $employee = Employee::create([
-    //         'code' => $request->code,
-    //         'employee_name' => $request->employee_name,
-    //         'employee_photo' => $photoPath,
-    //         'employee_position' => $request->employee_position,
-    //         'employee_birth' => $request->employee_birth,
-    //         'employee_contact' => $request->employee_contact,
-    //         'employee_description' => $request->employee_description,
-    //     ]);
-
-    //     return response()->json([
-    //         'success' => true,
-    //         'message' => 'Employee created successfully',
-    //         'data' => $employee
-    //     ], 201);
-    // }
-
     public function store(Request $request)
     {
         $request->validate([
@@ -69,51 +33,16 @@ class EmployeeController extends Controller
             'employee_description' => 'required|string',
         ]);
 
-        // Upload Cloudinary
-        // if ($request->hasFile('employee_photo')) {
-        //     $upload = Cloudinary::upload(
-        //         $request->file('employee_photo')->getRealPath(),
-        //         ['folder' => 'employees']
-        //     );
-
-        //     $photoUrl = $upload->getSecurePath(); // URL HTTPS
-        // } else {
-        //     $photoUrl = null;
-        // }
-
-        if ($request->hasFile('photo')) {
-            try {
-                $file = $request->file('photo');
-                $response = Http::asMultipart()->post(
-                    'https://api.cloudinary.com/v1_1/' . env('CLOUDINARY_CLOUD_NAME') . '/image/upload',
-                    [
-                        [
-                            'name' => 'file',
-                            'contents' => fopen($file->getRealPath(), 'r'),
-                            'filename' => $file->getClientOriginalName(),
-                        ],
-                        [
-                            'name' => 'upload_preset',
-                            'contents' => env('CLOUDINARY_UPLOAD_PRESET'),
-                        ],
-                    ]
-                );
-
-                $result = $response->json();
-                if (isset($result['secure_url'])) {
-                    $input['photo'] = $result['secure_url'];
-                } else {
-                    return back()->withErrors(['photo' => 'Cloudinary upload error: ' . ($result['error']['message'] ?? 'Unknown error')]);
-                }
-            } catch (\Exception $e) {
-                return back()->withErrors(['photo' => 'Cloudinary error: ' . $e->getMessage()]);
-            }
+        if ($request->hasFile('employee_photo')) {
+            $photoPath = $request->file('employee_photo')->store('employees', 'public');
+        } else {
+            $photoPath = null;
         }
 
         $employee = Employee::create([
             'code' => $request->code,
             'employee_name' => $request->employee_name,
-            'employee_photo' => $result,
+            'employee_photo' => $photoPath,
             'employee_position' => $request->employee_position,
             'employee_birth' => $request->employee_birth,
             'employee_contact' => $request->employee_contact,
@@ -126,6 +55,47 @@ class EmployeeController extends Controller
             'data' => $employee
         ], 201);
     }
+
+    // public function store(Request $request)
+    // {
+    //     $request->validate([
+    //         'code' => 'required|unique:employees|string|max:255',
+    //         'employee_name' => 'required|string|max:255',
+    //         'employee_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+    //         'employee_position' => 'required|string|max:255',
+    //         'employee_birth' => 'required|date',
+    //         'employee_contact' => 'required|numeric',
+    //         'employee_description' => 'required|string',
+    //     ]);
+
+    //     // Upload Cloudinary
+    //     if ($request->hasFile('employee_photo')) {
+    //         $upload = Cloudinary::upload(
+    //             $request->file('employee_photo')->getRealPath(),
+    //             ['folder' => 'employees']
+    //         );
+
+    //         $photoUrl = $upload->getSecurePath(); // URL HTTPS
+    //     } else {
+    //         $photoUrl = null;
+    //     }
+
+    //     $employee = Employee::create([
+    //         'code' => $request->code,
+    //         'employee_name' => $request->employee_name,
+    //         'employee_photo' => $photoUrl,
+    //         'employee_position' => $request->employee_position,
+    //         'employee_birth' => $request->employee_birth,
+    //         'employee_contact' => $request->employee_contact,
+    //         'employee_description' => $request->employee_description,
+    //     ]);
+
+    //     return response()->json([
+    //         'success' => true,
+    //         'message' => 'Employee created successfully',
+    //         'data' => $employee
+    //     ], 201);
+    // }
 
     // Menampilkan data detail karyawan berdasarkan id nya
     public function show($id)
@@ -191,37 +161,6 @@ class EmployeeController extends Controller
     // }
 
     // Mengubah data karyawan
-    // public function update(Request $request, $id)
-    // {
-    //     $employee = Employee::find($id);
-
-    //     if (!$employee) {
-    //         return response()->json([
-    //             'success' => false,
-    //             'message' => 'Employee not found'
-    //         ], 404);
-    //     }
-
-    //     // Gunakan `merge()` agar tidak ada field yang kosong
-    //     $data = $request->except(['employee_photo']);
-
-    //     if ($request->hasFile('employee_photo')) {
-    //         if ($employee->employee_photo) {
-    //             Storage::disk('public')->delete($employee->employee_photo);
-    //         }
-    //         $photoPath = $request->file('employee_photo')->store('employees', 'public');
-    //         $data['employee_photo'] = $photoPath;
-    //     }
-
-    //     $employee->update($data);
-
-    //     return response()->json([
-    //         'success' => true,
-    //         'message' => 'Employee updated successfully',
-    //         'data' => $employee
-    //     ]);
-    // }
-
     public function update(Request $request, $id)
     {
         $employee = Employee::find($id);
@@ -233,44 +172,15 @@ class EmployeeController extends Controller
             ], 404);
         }
 
+        // Gunakan `merge()` agar tidak ada field yang kosong
         $data = $request->except(['employee_photo']);
 
         if ($request->hasFile('employee_photo')) {
-
-            // // Upload photo baru ke Cloudinary
-            // $upload = Cloudinary::upload(
-            //     $request->file('employee_photo')->getRealPath(),
-            //     ['folder' => 'employees']
-            // );
-
-            try {
-                $file = $request->file('employee_photo');
-                $response = Http::asMultipart()->post(
-                    'https://api.cloudinary.com/v1_1/' . env('CLOUDINARY_CLOUD_NAME') . '/image/upload',
-                    [
-                        [
-                            'name' => 'file',
-                            'contents' => fopen($file->getRealPath(), 'r'),
-                            'filename' => $file->getClientOriginalName(),
-                        ],
-                        [
-                            'name' => 'upload_preset',
-                            'contents' => env('CLOUDINARY_UPLOAD_PRESET'),
-                        ],
-                    ]
-                );
-
-                $result = $response->json();
-                if (isset($result['secure_url'])) {
-                    $input['employee_photo'] = $result['secure_url'];
-                } else {
-                    return back()->withErrors(['employee_photo' => 'Cloudinary upload error: ' . ($result['error']['message'] ?? 'Unknown error')]);
-                }
-            } catch (\Exception $e) {
-                return back()->withErrors(['employee_photo' => 'Cloudinary error: ' . $e->getMessage()]);
+            if ($employee->employee_photo) {
+                Storage::disk('public')->delete($employee->employee_photo);
             }
-
-            $data['employee_photo'] = $result->getSecurePath();
+            $photoPath = $request->file('employee_photo')->store('employees', 'public');
+            $data['employee_photo'] = $photoPath;
         }
 
         $employee->update($data);
@@ -281,6 +191,39 @@ class EmployeeController extends Controller
             'data' => $employee
         ]);
     }
+
+    // public function update(Request $request, $id)
+    // {
+    //     $employee = Employee::find($id);
+
+    //     if (!$employee) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'Employee not found'
+    //         ], 404);
+    //     }
+
+    //     $data = $request->except(['employee_photo']);
+
+    //     if ($request->hasFile('employee_photo')) {
+
+    //         // Upload foto baru ke Cloudinary
+    //         $upload = Cloudinary::upload(
+    //             $request->file('employee_photo')->getRealPath(),
+    //             ['folder' => 'employees']
+    //         );
+
+    //         $data['employee_photo'] = $upload->getSecurePath();
+    //     }
+
+    //     $employee->update($data);
+
+    //     return response()->json([
+    //         'success' => true,
+    //         'message' => 'Employee updated successfully',
+    //         'data' => $employee
+    //     ]);
+    // }
 
     // Menghapus data karyawan
     public function destroy($id)
