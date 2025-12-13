@@ -6,8 +6,6 @@ use App\Models\Employee;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Storage;
-use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
-
 class EmployeeController extends Controller
 {
     // Menampilkan data karyawan

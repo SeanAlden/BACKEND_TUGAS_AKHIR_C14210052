@@ -16,7 +16,6 @@ use App\Models\ProductStatusHistory;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use App\Models\ProductStatusHistoryDetail;
-use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 
 class ProductController extends Controller
 {
