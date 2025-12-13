@@ -114,7 +114,7 @@ class AuthController extends Controller
         if (!$user || !Hash::check($request->password, $user->password)) {
             return response([
                 'message' => 'Kredensial login salah'
-            ], 401); 
+            ], 401);
         }
         $token = $user->createToken('auth_token')->plainTextToken;
         $response = [
@@ -255,38 +255,86 @@ class AuthController extends Controller
     // }
 
     // Fungsi untuk mengupdate gambar profil
+    // public function updateProfileImage(Request $request)
+    // {
+    //     // /**
+    //     //  * @var \App\Models\User $user
+    //     //  */
+    //     // // $user = auth()->user();
+    //     $user = Auth::user();
+
+    //     $request->validate([
+    //         'profile_image' => 'required|image|mimes:jpg,jpeg,png',
+    //     ]);
+
+    //     if ($request->hasFile('profile_image')) {
+    //         // Hapus gambar lama jika ada
+    //         if ($user->profile_image) {
+    //             Storage::disk('public')->delete('profile_images/' . $user->profile_image);
+    //         }
+
+    //         $image = $request->file('profile_image');
+    //         $filename = time() . '_' . \Illuminate\Support\Str::random(10) . '.' . $image->getClientOriginalExtension();
+    //         $image->storeAs('profile_images', $filename, 'public');
+
+    //         $user->profile_image = $filename;
+    //         $user->save();
+
+    //         return response()->json([
+    //             'message' => 'Profile image updated successfully',
+    //             'profile_image' => $filename,
+    //         ]);
+    //     }
+
+    //     return response()->json(['message' => 'No image uploaded'], 400);
+    // }
+
     public function updateProfileImage(Request $request)
     {
-        // /**
-        //  * @var \App\Models\User $user
-        //  */
-        // // $user = auth()->user();
+        /** @var \App\Models\User $user */
         $user = Auth::user();
 
         $request->validate([
-            'profile_image' => 'required|image|mimes:jpg,jpeg,png',
+            'profile_image' => 'required|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
         if ($request->hasFile('profile_image')) {
-            // Hapus gambar lama jika ada
+
+            // Hapus gambar lama di S3 (jika ada & berupa URL)
             if ($user->profile_image) {
-                Storage::disk('public')->delete('profile_images/' . $user->profile_image);
+                $oldPath = parse_url($user->profile_image, PHP_URL_PATH);
+                $oldPath = ltrim($oldPath, '/');
+
+                Storage::disk('s3')->delete($oldPath);
             }
 
+            // Upload gambar baru ke S3 (public)
             $image = $request->file('profile_image');
-            $filename = time() . '_' . \Illuminate\Support\Str::random(10) . '.' . $image->getClientOriginalExtension();
-            $image->storeAs('profile_images', $filename, 'public');
 
-            $user->profile_image = $filename;
+            $filename = time() . '_' . Str::random(10) . '.' . $image->getClientOriginalExtension();
+
+            $path = $image->storePubliclyAs(
+                'profile_images',
+                $filename,
+                's3'
+            );
+
+            // Ambil FULL URL
+            $fullUrl = Storage::disk('s3')->url($path);
+
+            // Simpan FULL URL ke DB
+            $user->profile_image = $fullUrl;
             $user->save();
 
             return response()->json([
                 'message' => 'Profile image updated successfully',
-                'profile_image' => $filename,
+                'profile_image' => $fullUrl,
             ]);
         }
 
-        return response()->json(['message' => 'No image uploaded'], 400);
+        return response()->json([
+            'message' => 'No image uploaded'
+        ], 400);
     }
 
     // public function getProfileImage(Request $request) 
