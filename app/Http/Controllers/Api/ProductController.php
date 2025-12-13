@@ -286,65 +286,6 @@ class ProductController extends Controller
     //     }
     // }
 
-    // public function store(Request $request)
-    // {
-    //     try {
-    //         $validatedData = $request->validate([
-    //             'code' => 'required|unique:products,code',
-    //             'name' => 'required',
-    //             'price' => 'required|numeric',
-    //             'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif',
-    //             'description' => 'required',
-    //             'category_id' => 'required',
-    //             'stocks' => 'required|array',
-    //             'stocks.*.exp_date' => 'required|date',
-    //             'stocks.*.stock' => 'required|numeric|min:0'
-    //         ]);
-
-    //         if ($request->hasFile('photo')) {
-    //             // Upload ke Cloudinary
-    //             $uploadedFile = Cloudinary::upload(
-    //                 $request->file('photo')->getRealPath(),
-    //                 ['folder' => 'product_photos']
-    //             );
-
-    //             $photoUrl = $uploadedFile->getSecurePath();
-    //         } else {
-    //             $photoUrl = null;
-    //         }
-
-    //         $product = Product::create([
-    //             'code' => $request->code,
-    //             'name' => $request->name,
-    //             'price' => $request->price,
-    //             'photo' => $photoUrl,
-    //             'description' => $request->description,
-    //             'category_id' => $request->category_id
-    //         ]);
-
-    //         foreach ($request->stocks as $stock) {
-    //             ProductStock::create([
-    //                 'product_id' => $product->id,
-    //                 'exp_date' => $stock['exp_date'],
-    //                 'stock' => $stock['stock']
-    //             ]);
-    //         }
-
-    //         return response()->json([
-    //             'success' => true,
-    //             'message' => 'Produk berhasil ditambahkan!',
-    //             'data' => $product->load('stocks')
-    //         ], 201);
-
-    //     } catch (\Exception $e) {
-    //         return response()->json([
-    //             'success' => false,
-    //             'message' => 'Terjadi kesalahan saat menyimpan produk',
-    //             'error' => $e->getMessage()
-    //         ], 500);
-    //     }
-    // }
-
     // Fungsi untuk menampilkan data detail produk berdasarkan id nya
     public function show($id)
     {
@@ -403,92 +344,13 @@ class ProductController extends Controller
     }
 
     // Fungsi untuk mengubah data produk
-    // public function update(Request $request, $id)
-    // {
-    //     try {
-    //         $product = Product::findOrFail($id);
-
-    //         $validatedData = $request->validate([
-    //             'code' => 'required|unique:products,code,' . $id,
-    //             'name' => 'required',
-    //             'price' => 'required|numeric',
-    //             'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif',
-    //             'description' => 'required',
-    //             'category_id' => 'required',
-    //             'stocks' => 'nullable|array',
-    //             'stocks.*.exp_date' => 'nullable|date',
-    //             'stocks.*.stock' => 'nullable|numeric|min:0'
-    //         ]);
-
-    //         if ($request->hasFile('photo')) {
-    //             // if ($product->photo && \Storage::disk('public')->exists($product->photo)) {
-    //             //     \Storage::disk('public')->delete($product->photo);
-    //             // }
-
-    //             // Hapus file lama dari S3
-    //             if ($product->photo) {
-    //                 $oldPath = str_replace(Storage::disk('s3')->url(''), '', $product->photo);
-    //                 Storage::disk('s3')->delete($oldPath);
-    //             }
-
-    //             // $photoPath = $request->file('photo')->store('product_photos', 'public');
-
-    //             $photoPath = $request->file('photo')->store('product_photos', [
-    //                 'disk' => 's3',
-    //                 'visibility' => 'public',
-    //             ]);
-    //             $photoUrl = Storage::disk('s3')->url($photoPath);
-    //         } else {
-    //             $photoPath = $product->photo;
-    //         }
-
-    //         $product->update([
-    //             'code' => $request->code,
-    //             'name' => $request->name,
-    //             'price' => $request->price,
-    //             'photo' => $photoUrl,
-    //             // 'photo' => $photoPath,
-    //             'description' => $request->description,
-    //             'category_id' => $request->category_id
-    //         ]);
-
-    //         $product->stocks()->delete();
-
-    //         foreach ($request->stocks as $stockData) {
-    //             ProductStock::create([
-    //                 'product_id' => $product->id,
-    //                 'exp_date' => $stockData['exp_date'],
-    //                 'stock' => $stockData['stock']
-    //             ]);
-    //         }
-
-    //         return response()->json([
-    //             'success' => true,
-    //             'message' => 'Produk berhasil diperbarui!',
-    //             'data' => $product->load('stocks')
-    //         ], 200);
-    //     } catch (\Illuminate\Validation\ValidationException $e) {
-    //         return response()->json([
-    //             'success' => false,
-    //             'message' => 'Validasi gagal!',
-    //             'errors' => $e->errors()
-    //         ], 422);
-    //     } catch (\Exception $e) {
-    //         return response()->json([
-    //             'success' => false,
-    //             'message' => 'Terjadi kesalahan saat memperbarui produk',
-    //             'error' => $e->getMessage()
-    //         ], 500);
-    //     }
-    // }
-
     public function update(Request $request, $id)
     {
         try {
             $product = Product::findOrFail($id);
 
             $validatedData = $request->validate([
-                'code' => 'required|unique:products,code,',
+                'code' => 'required|unique:products,code,' . $id,
                 'name' => 'required',
                 'price' => 'required|numeric',
                 'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif',
@@ -499,27 +361,26 @@ class ProductController extends Controller
                 'stocks.*.stock' => 'nullable|numeric|min:0'
             ]);
 
-            $photoUrl = $product->photo; // default pakai foto lama
-
             if ($request->hasFile('photo')) {
+                // if ($product->photo && \Storage::disk('public')->exists($product->photo)) {
+                //     \Storage::disk('public')->delete($product->photo);
+                // }
+
                 // Hapus file lama dari S3
                 if ($product->photo) {
-                    $oldPath = str_replace(
-                        rtrim(env('AWS_URL'), '/') . '/',
-                        '',
-                        $product->photo
-                    );
+                    $oldPath = str_replace(Storage::disk('s3')->url(''), '', $product->photo);
                     Storage::disk('s3')->delete($oldPath);
                 }
 
-                // Upload foto baru
+                // $photoPath = $request->file('photo')->store('product_photos', 'public');
+
                 $photoPath = $request->file('photo')->store('product_photos', [
                     'disk' => 's3',
                     'visibility' => 'public',
                 ]);
-
-                // Bangun URL secara manual agar path lengkap
-                $photoUrl = rtrim(env('AWS_URL'), '/') . '/' . ltrim($photoPath, '/');
+                $photoUrl = Storage::disk('s3')->url($photoPath);
+            } else {
+                $photoPath = $product->photo;
             }
 
             $product->update([
@@ -527,21 +388,19 @@ class ProductController extends Controller
                 'name' => $request->name,
                 'price' => $request->price,
                 'photo' => $photoUrl,
+                // 'photo' => $photoPath,
                 'description' => $request->description,
                 'category_id' => $request->category_id
             ]);
 
-            // Update stok
             $product->stocks()->delete();
 
-            if ($request->stocks) {
-                foreach ($request->stocks as $stockData) {
-                    ProductStock::create([
-                        'product_id' => $product->id,
-                        'exp_date' => $stockData['exp_date'],
-                        'stock' => $stockData['stock']
-                    ]);
-                }
+            foreach ($request->stocks as $stockData) {
+                ProductStock::create([
+                    'product_id' => $product->id,
+                    'exp_date' => $stockData['exp_date'],
+                    'stock' => $stockData['stock']
+                ]);
             }
 
             return response()->json([
@@ -581,16 +440,27 @@ class ProductController extends Controller
     //             'stocks.*.stock' => 'nullable|numeric|min:0'
     //         ]);
 
-    //         $photoUrl = $product->photo;
+    //         $photoUrl = $product->photo; // default pakai foto lama
 
     //         if ($request->hasFile('photo')) {
-    //             // Upload ke Cloudinary
-    //             $uploadedFile = Cloudinary::upload(
-    //                 $request->file('photo')->getRealPath(),
-    //                 ['folder' => 'product_photos']
-    //             );
+    //             // Hapus file lama dari S3
+    //             if ($product->photo) {
+    //                 $oldPath = str_replace(
+    //                     rtrim(env('AWS_URL'), '/') . '/',
+    //                     '',
+    //                     $product->photo
+    //                 );
+    //                 Storage::disk('s3')->delete($oldPath);
+    //             }
 
-    //             $photoUrl = $uploadedFile->getSecurePath();
+    //             // Upload foto baru
+    //             $photoPath = $request->file('photo')->store('product_photos', [
+    //                 'disk' => 's3',
+    //                 'visibility' => 'public',
+    //             ]);
+
+    //             // Bangun URL secara manual agar path lengkap
+    //             $photoUrl = rtrim(env('AWS_URL'), '/') . '/' . ltrim($photoPath, '/');
     //         }
 
     //         $product->update([
@@ -602,15 +472,15 @@ class ProductController extends Controller
     //             'category_id' => $request->category_id
     //         ]);
 
-    //         // Update stocks
+    //         // Update stok
     //         $product->stocks()->delete();
 
     //         if ($request->stocks) {
-    //             foreach ($request->stocks as $stock) {
+    //             foreach ($request->stocks as $stockData) {
     //                 ProductStock::create([
     //                     'product_id' => $product->id,
-    //                     'exp_date' => $stock['exp_date'],
-    //                     'stock' => $stock['stock']
+    //                     'exp_date' => $stockData['exp_date'],
+    //                     'stock' => $stockData['stock']
     //                 ]);
     //             }
     //         }
@@ -620,7 +490,12 @@ class ProductController extends Controller
     //             'message' => 'Produk berhasil diperbarui!',
     //             'data' => $product->load('stocks')
     //         ], 200);
-
+    //     } catch (\Illuminate\Validation\ValidationException $e) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'Validasi gagal!',
+    //             'errors' => $e->errors()
+    //         ], 422);
     //     } catch (\Exception $e) {
     //         return response()->json([
     //             'success' => false,
@@ -675,76 +550,6 @@ class ProductController extends Controller
     //         $product->stocks()->delete();
 
     //         // Convert JSON string to array
-    //         $stocks = json_decode($request->stocks, true);
-
-    //         if (is_array($stocks)) {
-    //             foreach ($stocks as $stock) {
-    //                 ProductStock::create([
-    //                     'product_id' => $product->id,
-    //                     'exp_date' => $stock['exp_date'],
-    //                     'stock' => $stock['stock']
-    //                 ]);
-    //             }
-    //         }
-
-    //         return response()->json([
-    //             'success' => true,
-    //             'message' => 'Produk berhasil diperbarui!',
-    //             'data' => $product->load('stocks')
-    //         ], 200);
-
-    //     } catch (\Exception $e) {
-    //         return response()->json([
-    //             'success' => false,
-    //             'message' => 'Terjadi kesalahan saat memperbarui produk',
-    //             'error' => $e->getMessage()
-    //         ], 500);
-    //     }
-    // }
-
-    // public function update(Request $request, $id)
-    // {
-    //     try {
-    //         $product = Product::findOrFail($id);
-
-    //         // Validasi frontend mengirim JSON string untuk stocks
-    //         $validatedData = $request->validate([
-    //             'code' => 'required|unique:products,code,' . $id,
-    //             'name' => 'required',
-    //             'price' => 'required|numeric',
-    //             'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif',
-    //             'description' => 'required',
-    //             'category_id' => 'required',
-    //             'stocks' => 'nullable'
-    //         ]);
-
-    //         $photoUrl = $product->photo;
-
-    //         // Jika ada file foto baru → upload
-    //         if ($request->hasFile('photo')) {
-
-    //             $uploadedFile = Cloudinary::upload(
-    //                 $request->file('photo')->getRealPath(),
-    //                 ['folder' => 'product_photos']
-    //             );
-
-    //             $photoUrl = $uploadedFile->getSecurePath();
-    //         }
-
-    //         // Update product utama
-    //         $product->update([
-    //             'code' => $request->code,
-    //             'name' => $request->name,
-    //             'price' => $request->price,
-    //             'photo' => $photoUrl,
-    //             'description' => $request->description,
-    //             'category_id' => $request->category_id
-    //         ]);
-
-    //         // Hapus stok lama
-    //         $product->stocks()->delete();
-
-    //         // Decode JSON stocks
     //         $stocks = json_decode($request->stocks, true);
 
     //         if (is_array($stocks)) {
