@@ -295,7 +295,8 @@ class AuthController extends Controller
         $user = Auth::user();
 
         $request->validate([
-            'profile_image' => 'required|image|mimes:jpg,jpeg,png|max:2048',
+            // 'profile_image' => 'required|image|mimes:jpg,jpeg,png|max:2048',
+            'profile_image' => 'required|image|mimes:jpg,jpeg,png',
         ]);
 
         if ($request->hasFile('profile_image')) {
