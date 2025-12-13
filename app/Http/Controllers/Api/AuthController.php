@@ -312,7 +312,7 @@ class AuthController extends Controller
             // Upload gambar baru ke S3 (public)
             $image = $request->file('profile_image');
 
-            $filename = time() . '_' . Str::random(10) . '.' . $image->getClientOriginalExtension();
+            $filename = time() . '_' . \Illuminate\Support\Str::random(10) . '.' . $image->getClientOriginalExtension();
 
             $path = $image->storePubliclyAs(
                 'profile_images',
