@@ -55,6 +55,47 @@ class EmployeeController extends Controller
     //     ], 201);
     // }
 
+    // public function store(Request $request)
+    // {
+    //     $request->validate([
+    //         'code' => 'required|unique:employees|string|max:255',
+    //         'employee_name' => 'required|string|max:255',
+    //         'employee_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+    //         'employee_position' => 'required|string|max:255',
+    //         'employee_birth' => 'required|date',
+    //         'employee_contact' => 'required|numeric',
+    //         'employee_description' => 'required|string',
+    //     ]);
+
+    //     $photoPath = null;
+
+    //     if ($request->hasFile('employee_photo')) {
+    //         // Upload ke S3 + public visibility
+    //         $photoPath = $request
+    //             ->file('employee_photo')
+    //             ->storePublicly('employees', 's3');
+    //     }
+
+    //     $employee = Employee::create([
+    //         'code' => $request->code,
+    //         'employee_name' => $request->employee_name,
+    //         'employee_photo' => $photoPath, // simpan path saja
+    //         'employee_position' => $request->employee_position,
+    //         'employee_birth' => $request->employee_birth,
+    //         'employee_contact' => $request->employee_contact,
+    //         'employee_description' => $request->employee_description,
+    //     ]);
+
+    //     return response()->json([
+    //         'success' => true,
+    //         'message' => 'Employee created successfully',
+    //         'data' => $employee,
+    //         'photo_url' => $photoPath
+    //             ? Storage::disk('s3')->url($photoPath)
+    //             : null,
+    //     ], 201);
+    // }
+
     public function store(Request $request)
     {
         $request->validate([
@@ -67,19 +108,22 @@ class EmployeeController extends Controller
             'employee_description' => 'required|string',
         ]);
 
-        $photoPath = null;
+        $photoUrl = null;
 
         if ($request->hasFile('employee_photo')) {
-            // Upload ke S3 + public visibility
+            // Upload ke S3
             $photoPath = $request
                 ->file('employee_photo')
                 ->storePublicly('employees', 's3');
+
+            // Ambil FULL URL
+            $photoUrl = Storage::disk('s3')->url($photoPath);
         }
 
         $employee = Employee::create([
             'code' => $request->code,
             'employee_name' => $request->employee_name,
-            'employee_photo' => $photoPath, // simpan path saja
+            'employee_photo' => $photoUrl, // SIMPAN FULL URL
             'employee_position' => $request->employee_position,
             'employee_birth' => $request->employee_birth,
             'employee_contact' => $request->employee_contact,
@@ -90,9 +134,6 @@ class EmployeeController extends Controller
             'success' => true,
             'message' => 'Employee created successfully',
             'data' => $employee,
-            'photo_url' => $photoPath
-                ? Storage::disk('s3')->url($photoPath)
-                : null,
         ], 201);
     }
 
@@ -191,6 +232,47 @@ class EmployeeController extends Controller
     //     ]);
     // }
 
+    // public function update(Request $request, $id)
+    // {
+    //     $employee = Employee::find($id);
+
+    //     if (!$employee) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'Employee not found'
+    //         ], 404);
+    //     }
+
+    //     // Ambil semua data kecuali foto
+    //     $data = $request->except(['employee_photo']);
+
+    //     if ($request->hasFile('employee_photo')) {
+
+    //         // Hapus foto lama di S3 (jika ada)
+    //         if ($employee->employee_photo) {
+    //             Storage::disk('s3')->delete($employee->employee_photo);
+    //         }
+
+    //         // Upload foto baru ke S3 (public)
+    //         $photoPath = $request
+    //             ->file('employee_photo')
+    //             ->storePublicly('employees', 's3');
+
+    //         $data['employee_photo'] = $photoPath;
+    //     }
+
+    //     $employee->update($data);
+
+    //     return response()->json([
+    //         'success' => true,
+    //         'message' => 'Employee updated successfully',
+    //         'data' => $employee,
+    //         'photo_url' => $employee->employee_photo
+    //             ? Storage::disk('s3')->url($employee->employee_photo)
+    //             : null,
+    //     ]);
+    // }
+
     public function update(Request $request, $id)
     {
         $employee = Employee::find($id);
@@ -202,22 +284,25 @@ class EmployeeController extends Controller
             ], 404);
         }
 
-        // Ambil semua data kecuali foto
         $data = $request->except(['employee_photo']);
 
         if ($request->hasFile('employee_photo')) {
 
-            // Hapus foto lama di S3 (jika ada)
+            // Hapus foto lama (jika ada & berasal dari S3)
             if ($employee->employee_photo) {
-                Storage::disk('s3')->delete($employee->employee_photo);
+                $oldPath = parse_url($employee->employee_photo, PHP_URL_PATH);
+                $oldPath = ltrim($oldPath, '/'); // hapus slash depan
+
+                Storage::disk('s3')->delete($oldPath);
             }
 
-            // Upload foto baru ke S3 (public)
+            // Upload foto baru
             $photoPath = $request
                 ->file('employee_photo')
                 ->storePublicly('employees', 's3');
 
-            $data['employee_photo'] = $photoPath;
+            // Simpan FULL URL
+            $data['employee_photo'] = Storage::disk('s3')->url($photoPath);
         }
 
         $employee->update($data);
@@ -226,9 +311,6 @@ class EmployeeController extends Controller
             'success' => true,
             'message' => 'Employee updated successfully',
             'data' => $employee,
-            'photo_url' => $employee->employee_photo
-                ? Storage::disk('s3')->url($employee->employee_photo)
-                : null,
         ]);
     }
 
