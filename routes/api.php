@@ -24,8 +24,8 @@ Route::prefix('products')->group(function () {
     Route::get('/{id}', [ProductController::class, 'show']);
     Route::get('/category/{id}', [ProductController::class, 'showByCategory']);
     Route::get('/active/category/{id}', [ProductController::class, 'showByCategoryActiveProduct']);
-    // Route::post('/{id}', [ProductController::class, 'update']);
-    Route::put('/{id}', [ProductController::class, 'update']);
+    Route::post('/{id}', [ProductController::class, 'update']);
+    // Route::put('/{id}', [ProductController::class, 'update']);
     // Route::delete('/{id}', [ProductController::class, 'destroy']);
     Route::put('/updateCondition/{id}', [ProductController::class, 'updateCondition']);
     Route::get('/product/{id}/exp-dates', [ProductController::class, 'getExpDates']);
