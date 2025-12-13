@@ -488,7 +488,7 @@ class ProductController extends Controller
             $product = Product::findOrFail($id);
 
             $validatedData = $request->validate([
-                'code' => 'required|unique:products,code,' . $id,
+                'code' => 'required|unique:products,code,',
                 'name' => 'required',
                 'price' => 'required|numeric',
                 'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif',
