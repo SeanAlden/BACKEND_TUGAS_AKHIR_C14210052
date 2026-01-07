@@ -2785,200 +2785,200 @@ class AnalysisController extends Controller
     //     ]);
     // }
 
-    public function countAccuracy()
-    {
-        $transactions = Transaction::with('details.product')->get();
-        if ($transactions->isEmpty()) {
-            return response()->json(['message' => 'Tidak ada prediksi karena tidak ada data transaksi.']);
-        }
-
-        $tMax = Carbon::parse(Transaction::max('transaction_date'));
-        $lambda = 0.005;
-        $weightedSales = [];
-        $firstTransactionDates = [];
-
-        foreach ($transactions as $transaction) {
-            $t = Carbon::parse($transaction->transaction_date);
-            $diffDays = $t->diffInDays($tMax);
-            $weight = exp(-$lambda * $diffDays);
-
-            foreach ($transaction->details as $detail) {
-                $productId = $detail->product->id;
-                $quantity = $detail->quantity;
-                $firstTransactionDates[$productId] = $firstTransactionDates[$productId] ?? $t;
-
-                if ($t->lt($firstTransactionDates[$productId])) {
-                    $firstTransactionDates[$productId] = $t;
-                }
-
-                $weightedSales[$productId] = ($weightedSales[$productId] ?? 0) + ($quantity * $weight);
-            }
-        }
-
-        foreach ($weightedSales as $productId => &$sales) {
-            $firstTransactionDate = Carbon::parse($firstTransactionDates[$productId]);
-            $productAge = $firstTransactionDate->diffInDays($tMax);
-            $sales *= log(1 + max($productAge, 1)); // Hindari log(0)
-        }
-
-        if (empty($weightedSales)) {
-            return response()->json(['message' => 'Tidak ada prediksi karena tidak ada data transaksi.']);
-        }
-
-        $totalWeightedSales = array_sum($weightedSales); // adalah |S| dalam konteks ini
-        $entropyValues = []; // menyimpan -pi * log2(pi) untuk setiap kelas (produk)
-        $epsilon = 1e-10; // menghindari log(0)
-
-        // menghitung E(S) / Overall Entropy 
-        // memperlakukan setiap produk sebagai kelas dalam himpunan S.
-        $overallEntropy = 0;
-        foreach ($weightedSales as $productId => $sales) {
-            $probability = ($totalWeightedSales > 0) ? $sales / $totalWeightedSales : 0;
-            if ($probability > 0) { // Hanya hitung jika probabilitas > 0 untuk menghindari log(0)
-                $term = -$probability * log($probability, 2); // Formula Entropy Gambar 1
-                $entropyValues[$productId] = $term; // Menyimpan kontribusi setiap produk
-                $overallEntropy += $term;
-            } else {
-                $entropyValues[$productId] = 0;
-            }
-        }
-
-        $gainValues = [];
-        // gain di sini adalah selisih antara Overall Entropy dengan kontribusi entropy individu dari masing-masing produk (seperti sebelumnya), ini adalah Gain Individual Produk, bukan Information Gain untuk pemilihan atribut C4.5.
-
-        foreach ($weightedSales as $productId => $sales) {
-            // mempertahankan perhitungan gain sebagai selisih overall entropy dengan entropy parsial produk tersebut
-            $gainValues[$productId] = $overallEntropy - $entropyValues[$productId];
-        }
-
-        $maxWeightedSales = max($weightedSales) ?: 1; // menghindari divide by zero
-        $accuracy = collect($weightedSales)->map(fn($s) => round(($s / $maxWeightedSales) * 100, 2));
-
-        foreach ($gainValues as $productId => $gain) {
-            EntropyGain::updateOrCreate(
-                ['product_id' => $productId],
-                [
-                    'entropy' => round($entropyValues[$productId], 6), // -pi*log2(pi) per produk
-                    'gain' => round($gain, 6)
-                ]
-            );
-        }
-
-        // stok per tanggal expired
-        $productsData = Product::whereIn('id', array_keys($weightedSales))
-            ->with('stocks')
-            ->get();
-
-        $products = $productsData->keyBy('id')->map(function ($product) {
-            return [
-                'name' => $product->name,
-                'code' => $product->code,
-                'condition' => $product->condition,
-                'price' => $product->price,
-                'photo' => $product->photo,
-                'category_name' => $product->category->name,
-                'stocks' => $product->stocks->sum('stock')
-            ];
-        });
-
-        // mengecek accuracy yang diatas 90% akan membuat notifikasi dan disimpan
-        $highAccuracyNotifications = [];
-
-        foreach ($accuracy as $productId => $accValue) {
-            if ($accValue > 85) {
-                $product = Product::find($productId);
-                if ($product) {
-                    $message = "{$product->name} berpeluang {$accValue}% menjadi produk terlaris.";
-
-                    $existing = Notification::where('message', $message)
-                        ->where('notification_type', 'Produk Terlaris')
-                        ->first();
-
-                    if (!$existing) {
-                        Notification::create([
-                            'message' => $message,
-                            'notification_type' => 'Produk Terlaris',
-                            'notification_time' => now()
-                        ]);
-                        $highAccuracyNotifications[] = $message;
-                    }
-                }
-            }
-        }
-
-        $decisionTree = $this->buildDecisionTree($gainValues, $accuracy, $products);
-
-        return response()->json([
-            'accuracy' => $accuracy,
-            'products' => $products,
-            'entropyValues' => $entropyValues,
-            'gainValues' => $gainValues,
-            'decisionTree' => $decisionTree,
-            'notifications' => $highAccuracyNotifications, // Tambahkan ke response
-        ]);
-    }
-
     // public function countAccuracy()
     // {
-    //     // 1. Ambil total weighted quantity per product dari DB
-    //     $tMax = Transaction::max('transaction_date');
-
-    //     $transactions = Transaction::join('transaction_details as td', 'transactions.id', '=', 'td.transaction_id')
-    //         ->selectRaw('td.product_id, SUM(td.quantity * POW(0.995, DATEDIFF(?, transactions.transaction_date))) as weighted_sales, MIN(transactions.transaction_date) as first_date', [$tMax])
-    //         ->groupBy('td.product_id')
-    //         ->get();
-
+    //     $transactions = Transaction::with('details.product')->get();
     //     if ($transactions->isEmpty()) {
-    //         return response()->json(['message' => 'Tidak ada transaksi.']);
+    //         return response()->json(['message' => 'Tidak ada prediksi karena tidak ada data transaksi.']);
     //     }
 
-    //     $totalWeighted = $transactions->sum('weighted_sales');
-    //     $entropyValues = [];
+    //     $tMax = Carbon::parse(Transaction::max('transaction_date'));
+    //     $lambda = 0.005;
+    //     $weightedSales = [];
+    //     $firstTransactionDates = [];
+
+    //     foreach ($transactions as $transaction) {
+    //         $t = Carbon::parse($transaction->transaction_date);
+    //         $diffDays = $t->diffInDays($tMax);
+    //         $weight = exp(-$lambda * $diffDays);
+
+    //         foreach ($transaction->details as $detail) {
+    //             $productId = $detail->product->id;
+    //             $quantity = $detail->quantity;
+    //             $firstTransactionDates[$productId] = $firstTransactionDates[$productId] ?? $t;
+
+    //             if ($t->lt($firstTransactionDates[$productId])) {
+    //                 $firstTransactionDates[$productId] = $t;
+    //             }
+
+    //             $weightedSales[$productId] = ($weightedSales[$productId] ?? 0) + ($quantity * $weight);
+    //         }
+    //     }
+
+    //     foreach ($weightedSales as $productId => &$sales) {
+    //         $firstTransactionDate = Carbon::parse($firstTransactionDates[$productId]);
+    //         $productAge = $firstTransactionDate->diffInDays($tMax);
+    //         $sales *= log(1 + max($productAge, 1)); // Hindari log(0)
+    //     }
+
+    //     if (empty($weightedSales)) {
+    //         return response()->json(['message' => 'Tidak ada prediksi karena tidak ada data transaksi.']);
+    //     }
+
+    //     $totalWeightedSales = array_sum($weightedSales); // adalah |S| dalam konteks ini
+    //     $entropyValues = []; // menyimpan -pi * log2(pi) untuk setiap kelas (produk)
+    //     $epsilon = 1e-10; // menghindari log(0)
+
+    //     // menghitung E(S) / Overall Entropy 
+    //     // memperlakukan setiap produk sebagai kelas dalam himpunan S.
+    //     $overallEntropy = 0;
+    //     foreach ($weightedSales as $productId => $sales) {
+    //         $probability = ($totalWeightedSales > 0) ? $sales / $totalWeightedSales : 0;
+    //         if ($probability > 0) { // Hanya hitung jika probabilitas > 0 untuk menghindari log(0)
+    //             $term = -$probability * log($probability, 2); // Formula Entropy Gambar 1
+    //             $entropyValues[$productId] = $term; // Menyimpan kontribusi setiap produk
+    //             $overallEntropy += $term;
+    //         } else {
+    //             $entropyValues[$productId] = 0;
+    //         }
+    //     }
+
     //     $gainValues = [];
-    //     $accuracy = [];
+    //     // gain di sini adalah selisih antara Overall Entropy dengan kontribusi entropy individu dari masing-masing produk (seperti sebelumnya), ini adalah Gain Individual Produk, bukan Information Gain untuk pemilihan atribut C4.5.
 
-    //     foreach ($transactions as $row) {
-    //         $productId = $row->product_id;
-    //         $sales = $row->weighted_sales;
-
-    //         // Tambahkan bobot waktu: log(age)
-    //         $ageDays = Carbon::parse($row->first_date)->diffInDays(Carbon::parse($tMax));
-    //         $weighted = $sales * log(1 + max($ageDays, 1));
-
-    //         $prob = $totalWeighted > 0 ? $weighted / $totalWeighted : 0;
-    //         $entropy = $prob > 0 ? -$prob * log($prob, 2) : 0;
-
-    //         $entropyValues[$productId] = $entropy;
-    //         $gainValues[$productId] = max(0, $totalWeighted - $entropy); // tetap heuristic
-    //         $accuracy[$productId] = round(($weighted / max($transactions->max('weighted_sales'), 1)) * 100, 2);
+    //     foreach ($weightedSales as $productId => $sales) {
+    //         // mempertahankan perhitungan gain sebagai selisih overall entropy dengan entropy parsial produk tersebut
+    //         $gainValues[$productId] = $overallEntropy - $entropyValues[$productId];
     //     }
 
-    //     // Bulk upsert
-    //     $entropyData = [];
+    //     $maxWeightedSales = max($weightedSales) ?: 1; // menghindari divide by zero
+    //     $accuracy = collect($weightedSales)->map(fn($s) => round(($s / $maxWeightedSales) * 100, 2));
+
     //     foreach ($gainValues as $productId => $gain) {
-    //         $entropyData[] = [
-    //             'product_id' => $productId,
-    //             'entropy' => round($entropyValues[$productId], 6),
-    //             'gain' => round($gain, 6),
-    //             'updated_at' => now(),
-    //             'created_at' => now()
-    //         ];
-    //     }
-
-    //     foreach (array_chunk($entropyData, 500) as $chunk) {
-    //         EntropyGain::upsert(
-    //             $chunk,
-    //             ['product_id'],
-    //             ['entropy', 'gain', 'updated_at']
+    //         EntropyGain::updateOrCreate(
+    //             ['product_id' => $productId],
+    //             [
+    //                 'entropy' => round($entropyValues[$productId], 6), // -pi*log2(pi) per produk
+    //                 'gain' => round($gain, 6)
+    //             ]
     //         );
     //     }
 
+    //     // stok per tanggal expired
+    //     $productsData = Product::whereIn('id', array_keys($weightedSales))
+    //         ->with('stocks')
+    //         ->get();
+
+    //     $products = $productsData->keyBy('id')->map(function ($product) {
+    //         return [
+    //             'name' => $product->name,
+    //             'code' => $product->code,
+    //             'condition' => $product->condition,
+    //             'price' => $product->price,
+    //             'photo' => $product->photo,
+    //             'category_name' => $product->category->name,
+    //             'stocks' => $product->stocks->sum('stock')
+    //         ];
+    //     });
+
+    //     // mengecek accuracy yang diatas 90% akan membuat notifikasi dan disimpan
+    //     $highAccuracyNotifications = [];
+
+    //     foreach ($accuracy as $productId => $accValue) {
+    //         if ($accValue > 85) {
+    //             $product = Product::find($productId);
+    //             if ($product) {
+    //                 $message = "{$product->name} berpeluang {$accValue}% menjadi produk terlaris.";
+
+    //                 $existing = Notification::where('message', $message)
+    //                     ->where('notification_type', 'Produk Terlaris')
+    //                     ->first();
+
+    //                 if (!$existing) {
+    //                     Notification::create([
+    //                         'message' => $message,
+    //                         'notification_type' => 'Produk Terlaris',
+    //                         'notification_time' => now()
+    //                     ]);
+    //                     $highAccuracyNotifications[] = $message;
+    //                 }
+    //             }
+    //         }
+    //     }
+
+    //     $decisionTree = $this->buildDecisionTree($gainValues, $accuracy, $products);
+
     //     return response()->json([
     //         'accuracy' => $accuracy,
+    //         'products' => $products,
     //         'entropyValues' => $entropyValues,
-    //         'gainValues' => $gainValues
+    //         'gainValues' => $gainValues,
+    //         'decisionTree' => $decisionTree,
+    //         'notifications' => $highAccuracyNotifications, // Tambahkan ke response
     //     ]);
     // }
+
+    public function countAccuracy()
+    {
+        // 1. Ambil total weighted quantity per product dari DB
+        $tMax = Transaction::max('transaction_date');
+
+        $transactions = Transaction::join('transaction_details as td', 'transactions.id', '=', 'td.transaction_id')
+            ->selectRaw('td.product_id, SUM(td.quantity * POW(0.995, DATEDIFF(?, transactions.transaction_date))) as weighted_sales, MIN(transactions.transaction_date) as first_date', [$tMax])
+            ->groupBy('td.product_id')
+            ->get();
+
+        if ($transactions->isEmpty()) {
+            return response()->json(['message' => 'Tidak ada transaksi.']);
+        }
+
+        $totalWeighted = $transactions->sum('weighted_sales');
+        $entropyValues = [];
+        $gainValues = [];
+        $accuracy = [];
+
+        foreach ($transactions as $row) {
+            $productId = $row->product_id;
+            $sales = $row->weighted_sales;
+
+            // Tambahkan bobot waktu: log(age)
+            $ageDays = Carbon::parse($row->first_date)->diffInDays(Carbon::parse($tMax));
+            $weighted = $sales * log(1 + max($ageDays, 1));
+
+            $prob = $totalWeighted > 0 ? $weighted / $totalWeighted : 0;
+            $entropy = $prob > 0 ? -$prob * log($prob, 2) : 0;
+
+            $entropyValues[$productId] = $entropy;
+            $gainValues[$productId] = max(0, $totalWeighted - $entropy); // tetap heuristic
+            $accuracy[$productId] = round(($weighted / max($transactions->max('weighted_sales'), 1)) * 100, 2);
+        }
+
+        // Bulk upsert
+        $entropyData = [];
+        foreach ($gainValues as $productId => $gain) {
+            $entropyData[] = [
+                'product_id' => $productId,
+                'entropy' => round($entropyValues[$productId], 6),
+                'gain' => round($gain, 6),
+                'updated_at' => now(),
+                'created_at' => now()
+            ];
+        }
+
+        foreach (array_chunk($entropyData, 500) as $chunk) {
+            EntropyGain::upsert(
+                $chunk,
+                ['product_id'],
+                ['entropy', 'gain', 'updated_at']
+            );
+        }
+
+        return response()->json([
+            'accuracy' => $accuracy,
+            'entropyValues' => $entropyValues,
+            'gainValues' => $gainValues
+        ]);
+    }
 
     // public function countAccuracy()
     // {
