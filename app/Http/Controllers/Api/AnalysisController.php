@@ -3013,19 +3013,13 @@ class AnalysisController extends Controller
 
             $ageDays = Carbon::parse($row->first_date)->diffInDays(Carbon::parse($tMax));
             $weighted = $sales * log(1 + max($ageDays, 1));
-            
-            $maxWeighted = max(array_map(function ($row) use ($tMax) {
-                $ageDays = Carbon::parse($row->first_date)->diffInDays(Carbon::parse($tMax));
-                return $row->weighted_sales * log(1 + max($ageDays, 1));
-            }, $transactions->toArray()));
 
             $prob = $totalWeighted > 0 ? $weighted / $totalWeighted : 0;
             $entropy = $prob > 0 ? -$prob * log($prob, 2) : 0;
 
             $entropyValues[$productId] = $entropy;
             $gainValues[$productId] = max(0, $totalWeighted - $entropy); // tetap heuristic
-            // $accuracy[$productId] = round(($weighted / max($transactions->max('weighted_sales'), 1)) * 100, 2);
-            $accuracy[$productId] = round(($weighted / max($maxWeighted, 1)) * 100, 2);
+            $accuracy[$productId] = round(($weighted / max($transactions->max('weighted_sales'), 1)) * 100, 2);
 
             // Simpan data produk
             $productsData[$productId] = [
