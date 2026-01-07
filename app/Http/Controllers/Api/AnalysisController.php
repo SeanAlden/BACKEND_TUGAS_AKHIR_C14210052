@@ -1041,7 +1041,7 @@
 
 //         // $bestAttribute = array_keys($gainValues, max($gainValues))[0];
 //         // $tree = "Root Node: $bestAttribute\n";
-        
+
 //         $bestAttributeProductId = array_keys($gainValues, max($gainValues))[0];
 //         $rootProduct = $products[$bestAttributeProductId] ?? null;
 
@@ -1447,7 +1447,7 @@
 //     {
 //         // Ambil semua transaksi dan urutkan berdasarkan tanggal transaksi untuk DES
 //         $transactions = Transaction::with('details.product')->orderBy('transaction_date', 'asc')->get();
-        
+
 //         // Dapatkan tanggal transaksi maksimum
 //         // Jika tidak ada transaksi, $Tmax akan null, handle ini
 //         $Tmax = $transactions->isNotEmpty() ? Carbon::parse($transactions->max('transaction_date')) : Carbon::now();
@@ -1466,7 +1466,7 @@
 
 //         foreach ($transactions as $transaction) {
 //             $transactionDate = Carbon::parse($transaction->transaction_date);
-            
+
 //             foreach ($transaction->details as $detail) {
 //                 $productId = $detail->product->id;
 //                 $quantity = $detail->quantity; // Ini akan menjadi Xt
@@ -1497,7 +1497,7 @@
 //                 // Simpan nilai S't dan S''t saat ini untuk iterasi berikutnya
 //                 $smoothedValues[$productId]['S_prime'] = $S_prime_current;
 //                 $smoothedValues[$productId]['S_double_prime'] = $S_double_prime_current;
-                
+
 //                 // --- Update first and last transaction dates ---
 //                 $firstTransactionDates[$productId] = $firstTransactionDates[$productId] ?? $transactionDate;
 //                 $lastTransactionDates[$productId] = $lastTransactionDates[$productId] ?? $transactionDate;
@@ -1516,12 +1516,12 @@
 //                 }
 //                 // Kumulatif raw sales
 //                 $weightedSales[$productId]['raw'] += $quantity;
-                
+
 //                 // Untuk 'weighted' sales, kita bisa menggunakan S't sebagai representasi nilai smoothing.
 //                 // Jika tujuan akhir adalah ramalan S(t+m), kita akan menghitung a_t dan b_t di sini.
 //                 // Mengingat output yang ada adalah 'weighted' sales, kita bisa menyimpan S_prime_current
 //                 // atau a_t sebagai nilai weighted. Saya akan menyimpan a_t sebagai nilai weighted.
-                
+
 //                 // Formula 3: at = 2S't - S''t
 //                 $a_t = 2 * $S_prime_current - $S_double_prime_current;
 
@@ -1529,7 +1529,7 @@
 //                 // Pastikan (1 - alpha) tidak nol
 //                 $denom = (1 - $alpha);
 //                 $b_t = ($denom != 0) ? ($alpha / $denom) * ($S_prime_current - $S_double_prime_current) : 0;
-                
+
 //                 // Untuk S_{t+m}, kita butuh nilai 'm'. Karena ini bukan fungsi peramalan, 
 //                 // kita akan menyimpan 'a_t' sebagai nilai weighted akhir untuk setiap produk.
 //                 // Jika ingin meramalkan, 'm' perlu ditentukan di sini atau sebagai parameter.
@@ -1551,7 +1551,7 @@
 
 //             $productDateDifferences[$productId] = $selisihHari;
 //             $productTimeWeights[$productId] = round($bobotWaktuTambahan, 4);
-            
+
 //             // Ini akan mengalikan hasil a_t dengan bobot waktu tambahan.
 //             // Dalam konteks DES murni, ini tidak ada. Saya pertahankan karena batasan.
 //             // Anda bisa mempertimbangkan untuk tidak menerapkan ini jika hanya ingin hasil murni DES di 'weighted'.
@@ -1723,7 +1723,7 @@
 
 //         // $bestAttribute = array_keys($gainValues, max($gainValues))[0];
 //         // $tree = "Root Node: $bestAttribute\n";
-        
+
 //         $bestAttributeProductId = array_keys($gainValues, max($gainValues))[0];
 //         $rootProduct = $products[$bestAttributeProductId] ?? null;
 
@@ -1867,7 +1867,7 @@
 //     {
 //         // Ambil semua transaksi dan urutkan berdasarkan tanggal transaksi untuk DES
 //         $transactions = Transaction::with('details.product')->orderBy('transaction_date', 'asc')->get();
-        
+
 //         // Dapatkan tanggal transaksi maksimum
 //         // Jika tidak ada transaksi, $Tmax akan null, handle ini
 //         $Tmax = $transactions->isNotEmpty() ? Carbon::parse($transactions->max('transaction_date')) : Carbon::now();
@@ -1886,7 +1886,7 @@
 
 //         foreach ($transactions as $transaction) {
 //             $transactionDate = Carbon::parse($transaction->transaction_date);
-            
+
 //             foreach ($transaction->details as $detail) {
 //                 $productId = $detail->product->id;
 //                 $quantity = $detail->quantity; // Ini akan menjadi Xt
@@ -1917,7 +1917,7 @@
 //                 // Simpan nilai S't dan S''t saat ini untuk iterasi berikutnya
 //                 $smoothedValues[$productId]['S_prime'] = $S_prime_current;
 //                 $smoothedValues[$productId]['S_double_prime'] = $S_double_prime_current;
-                
+
 //                 // --- Update first and last transaction dates ---
 //                 $firstTransactionDates[$productId] = $firstTransactionDates[$productId] ?? $transactionDate;
 //                 $lastTransactionDates[$productId] = $lastTransactionDates[$productId] ?? $transactionDate;
@@ -1936,12 +1936,12 @@
 //                 }
 //                 // Kumulatif raw sales
 //                 $weightedSales[$productId]['raw'] += $quantity;
-                
+
 //                 // Untuk 'weighted' sales, kita bisa menggunakan S't sebagai representasi nilai smoothing.
 //                 // Jika tujuan akhir adalah ramalan S(t+m), kita akan menghitung a_t dan b_t di sini.
 //                 // Mengingat output yang ada adalah 'weighted' sales, kita bisa menyimpan S_prime_current
 //                 // atau a_t sebagai nilai weighted. Saya akan menyimpan a_t sebagai nilai weighted.
-                
+
 //                 // Formula 3: at = 2S't - S''t
 //                 $a_t = 2 * $S_prime_current - $S_double_prime_current;
 
@@ -1949,7 +1949,7 @@
 //                 // Pastikan (1 - alpha) tidak nol
 //                 $denom = (1 - $alpha);
 //                 $b_t = ($denom != 0) ? ($alpha / $denom) * ($S_prime_current - $S_double_prime_current) : 0;
-                
+
 //                 // Untuk S_{t+m}, kita butuh nilai 'm'. Karena ini bukan fungsi peramalan, 
 //                 // kita akan menyimpan 'a_t' sebagai nilai weighted akhir untuk setiap produk.
 //                 // Jika ingin meramalkan, 'm' perlu ditentukan di sini atau sebagai parameter.
@@ -1971,7 +1971,7 @@
 
 //             $productDateDifferences[$productId] = $selisihHari;
 //             $productTimeWeights[$productId] = round($bobotWaktuTambahan, 4);
-            
+
 //             // Ini akan mengalikan hasil a_t dengan bobot waktu tambahan.
 //             // Dalam konteks DES murni, ini tidak ada. Saya pertahankan karena batasan.
 //             // Anda bisa mempertimbangkan untuk tidak menerapkan ini jika hanya ingin hasil murni DES di 'weighted'.
@@ -2060,7 +2060,7 @@
 //     //             $entropyValues[$productId] = 0;
 //     //         }
 //     //     }
-        
+
 //     //     $gainValues = [];
 //     //     // Untuk Gain (Gambar 2), ini adalah tantangan terbesar tanpa perubahan struktur.
 //     //     // Jika kita harus menggunakan formula Gain persis, kita perlu mendefinisikan atribut A
@@ -2146,7 +2146,7 @@
 //     //         'notifications' => $highAccuracyNotifications, // Tambahkan ke response
 //     //     ]);
 //     // }
-    
+
 //     public function countAccuracy()
 //     {
 //         $transactions = Transaction::with('details.product')->get();
@@ -2205,7 +2205,7 @@
 //                 $entropyValues[$productId] = 0;
 //             }
 //         }
-        
+
 //         $gainValues = [];
 //         // Untuk Gain (Gambar 2), ini adalah tantangan terbesar tanpa perubahan struktur.
 //         // Jika kita harus menggunakan formula Gain persis, kita perlu mendefinisikan atribut A
@@ -2226,7 +2226,7 @@
 //             $gainValues[$productId] = $overallEntropy - $entropyValues[$productId];
 //         }
 //         // --- Akhir Bagian Entropy dan Gain yang Disesuaikan ---
-        
+
 //         // --- Perbaikan Error: Pindahkan definisi $accuracy ke sini ---
 //         $maxWeightedSales = max($weightedSales) ?: 1; // Hindari divide by zero
 //         $accuracy = collect($weightedSales)->map(fn($s) => round(($s / $maxWeightedSales) * 100, 2));
@@ -2311,7 +2311,7 @@
 
 //         // $bestAttribute = array_keys($gainValues, max($gainValues))[0];
 //         // $tree = "Root Node: $bestAttribute\n";
-        
+
 //         $bestAttributeProductId = array_keys($gainValues, max($gainValues))[0];
 //         $rootProduct = $products[$bestAttributeProductId] ?? null;
 
@@ -2451,130 +2451,189 @@ class AnalysisController extends Controller
         return response()->json(['transactions' => $transactions]);
     }
 
+    // public function countAttributes()
+    // {
+    //     // mengambil data transaksi dan mengurutkannya secara ascending untuk proses pertama exponential smoothing
+    //     $transactions = Transaction::with('details.product')->orderBy('transaction_date', 'asc')->get();
+
+    //     // untuk mendapatkan tanggal transaksi maksimum, jika tidak ada transaksi, $Tmax menjadi null
+    //     $Tmax = $transactions->isNotEmpty() ? Carbon::parse($transactions->max('transaction_date')) : Carbon::now();
+
+    //     // menggunakan nilai alpha untuk exponential smoothing
+    //     $alpha = 0.005; 
+
+    //     $weightedSales = []; // menyimpan hasil akhir smoothing (S't) atau ramalan
+    //     $firstTransactionDates = [];
+    //     $lastTransactionDates = [];
+    //     $productDateDifferences = [];
+    //     $productTimeWeights = [];
+
+    //     // untuk menyimpan nilai S' dan S'' per produk
+    //     $smoothedValues = []; // menyimpan nilai S't dan S''t untuk setiap produk
+
+    //     foreach ($transactions as $transaction) {
+    //         $transactionDate = Carbon::parse($transaction->transaction_date);
+
+    //         foreach ($transaction->details as $detail) {
+    //             $productId = $detail->product->id;
+    //             $quantity = $detail->quantity; // nilai kuantitas ini digunakan sebagai nilai Xt
+
+    //             // menginisialisasi S' dan S'' pada tiap produk jika belum ada
+    //             if (!isset($smoothedValues[$productId])) {
+    //                 // inisialisasi awal nilai S't dan S''t untuk masing produk dengan S'0 = X0 dan S''0 = X0, asumsikan S't-1 dan S''t-1 adalah 0 atau nilai quantity pertama, gunakan quantity sebagai nilai awal jika nilai ini adalah transaksi pertama tiap produk
+    //                 $smoothedValues[$productId] = [
+    //                     'S_prime' => $quantity, // S't-1
+    //                     'S_double_prime' => $quantity, // S''t-1
+    //                 ];
+    //             }
+
+    //             // mengambil nilai S't-1 dan S''t-1 sebelumnya
+    //             $S_prime_prev = $smoothedValues[$productId]['S_prime'];
+    //             $S_double_prime_prev = $smoothedValues[$productId]['S_double_prime'];
+
+    //             // perhitungan formula 1: S't = alpha * Xt + (1 - alpha) * S't-1
+    //             $S_prime_current = $alpha * $quantity + (1 - $alpha) * $S_prime_prev;
+
+    //             // perhitungan formula 2: S''t = alpha * S't + (1 - alpha) * S''t-1
+    //             $S_double_prime_current = $alpha * $S_prime_current + (1 - $alpha) * $S_double_prime_prev;
+
+    //             // menyimpan nilai S't dan S''t saat ini untuk iterasi berikutnya
+    //             $smoothedValues[$productId]['S_prime'] = $S_prime_current;
+    //             $smoothedValues[$productId]['S_double_prime'] = $S_double_prime_current;
+
+    //             // mengupdate nilai transaksi pertama dan terakhir
+    //             $firstTransactionDates[$productId] = $firstTransactionDates[$productId] ?? $transactionDate;
+    //             $lastTransactionDates[$productId] = $lastTransactionDates[$productId] ?? $transactionDate;
+
+    //             if ($transactionDate->lt($firstTransactionDates[$productId])) {
+    //                 $firstTransactionDates[$productId] = $transactionDate;
+    //             }
+    //             if ($transactionDate->gt($lastTransactionDates[$productId])) {
+    //                 $lastTransactionDates[$productId] = $transactionDate;
+    //             }
+
+    //             // menginisialisasi nilai raw sales jika belum ada
+    //             if (!isset($weightedSales[$productId])) {
+    //                 $weightedSales[$productId] = ['raw' => 0, 'weighted' => 0];
+    //             }
+    //             // nilai Kumulatif raw sales
+    //             $weightedSales[$productId]['raw'] += $quantity;
+
+    //             // menggunakan S't sebagai representasi nilai smoothing untuk weighted sales, kalau tujuan akhir adalah ramalan S(t+m), akan dihitung a_t dan b_t di sini. Mengingat output yang ada adalah weighted sales, maka bisa menyimpan S_prime_current atau a_t sebagai nilai weighted
+
+    //             // perhitungan formula 3: at = 2S't - S''t
+    //             $a_t = 2 * $S_prime_current - $S_double_prime_current;
+
+    //             // perhitungan formula 4: bt = (alpha / (1-alpha)) * (S't - S''t) serta memastikan (1 - alpha) tidak nol
+    //             $denom = (1 - $alpha);
+    //             $b_t = ($denom != 0) ? ($alpha / $denom) * ($S_prime_current - $S_double_prime_current) : 0;
+
+    //             // untuk S_{t+m}, dibutuhkan nilai 'm'. Karena ini bukan fungsi peramalan, menyimpan 'a_t' sebagai nilai weighted akhir untuk setiap produk. 
+
+    //             // untuk meramalkan atau prediksi, 'm' perlu ditentukan di sini atau sebagai parameter.
+    //             // weighted sales mewakili nilai saat ini.
+    //             $weightedSales[$productId]['weighted'] = $a_t; // menggunakan a_t sebagai weighted sales
+    //         }
+    //     }
+
+    //     foreach ($weightedSales as $productId => &$sales) {
+    //         // perhitungan selisihHari dan bobotWaktuTambahan ini adalah pembobotan waktu terpisah, untuk menghitung selisih hari.
+
+    //         // hasil weighted sudah didasarkan pada a_t dari double exponential smoothing.
+    //         $firstTransactionDate = Carbon::parse($firstTransactionDates[$productId]);
+    //         $lastTransactionDate = Carbon::parse($lastTransactionDates[$productId]);
+    //         $selisihHari = $firstTransactionDate->diffInDays($lastTransactionDate);
+    //         $bobotWaktuTambahan = log(1 + max($selisihHari, 1)); // Hindari log(0)
+
+    //         $productDateDifferences[$productId] = $selisihHari;
+    //         $productTimeWeights[$productId] = round($bobotWaktuTambahan, 4);
+
+    //         // ini akan mengalikan hasil a_t dengan bobot waktu tambahan, mempertimbangkan untuk tidak menerapkan ini jika hanya ingin hasil murni DES di weighted.
+    //         $sales['weighted'] *= $bobotWaktuTambahan; 
+
+    //         SalesCount::updateOrCreate(
+    //             ['product_id' => $productId, 'transaction_date' => $Tmax],
+    //             [
+    //                 'raw_sales' => $sales['raw'],
+    //                 'weighted_sales' => $sales['weighted'],
+    //                 'days_between_first_last_transaction' => $productDateDifferences[$productId],
+    //                 'time_weight' => $productTimeWeights[$productId]
+    //             ]
+    //         );
+    //     }
+
+    //     $products = Product::whereIn('id', array_keys($weightedSales))->get()->keyBy('id');
+
+    //     return response()->json(compact(
+    //         'transactions',
+    //         'weightedSales',
+    //         'products',
+    //         'firstTransactionDates',
+    //         'lastTransactionDates',
+    //         'productDateDifferences',
+    //         'productTimeWeights',
+    //         'Tmax'
+    //     ));
+    // }
+
     public function countAttributes()
     {
-        // mengambil data transaksi dan mengurutkannya secara ascending untuk proses pertama exponential smoothing
-        $transactions = Transaction::with('details.product')->orderBy('transaction_date', 'asc')->get();
-        
-        // untuk mendapatkan tanggal transaksi maksimum, jika tidak ada transaksi, $Tmax menjadi null
-        $Tmax = $transactions->isNotEmpty() ? Carbon::parse($transactions->max('transaction_date')) : Carbon::now();
+        // 1. Ambil total quantity per product sekaligus dari DB
+        $transactions = Transaction::join('transaction_details as td', 'transactions.id', '=', 'td.transaction_id')
+            ->selectRaw('td.product_id, SUM(td.quantity) as total_quantity, MIN(transactions.transaction_date) as first_date, MAX(transactions.transaction_date) as last_date')
+            ->groupBy('td.product_id')
+            ->get();
 
-        // menggunakan nilai alpha untuk exponential smoothing
-        $alpha = 0.005; 
-
-        $weightedSales = []; // menyimpan hasil akhir smoothing (S't) atau ramalan
-        $firstTransactionDates = [];
-        $lastTransactionDates = [];
-        $productDateDifferences = [];
-        $productTimeWeights = [];
-
-        // untuk menyimpan nilai S' dan S'' per produk
-        $smoothedValues = []; // menyimpan nilai S't dan S''t untuk setiap produk
-
-        foreach ($transactions as $transaction) {
-            $transactionDate = Carbon::parse($transaction->transaction_date);
-            
-            foreach ($transaction->details as $detail) {
-                $productId = $detail->product->id;
-                $quantity = $detail->quantity; // nilai kuantitas ini digunakan sebagai nilai Xt
-
-                // menginisialisasi S' dan S'' pada tiap produk jika belum ada
-                if (!isset($smoothedValues[$productId])) {
-                    // inisialisasi awal nilai S't dan S''t untuk masing produk dengan S'0 = X0 dan S''0 = X0, asumsikan S't-1 dan S''t-1 adalah 0 atau nilai quantity pertama, gunakan quantity sebagai nilai awal jika nilai ini adalah transaksi pertama tiap produk
-                    $smoothedValues[$productId] = [
-                        'S_prime' => $quantity, // S't-1
-                        'S_double_prime' => $quantity, // S''t-1
-                    ];
-                }
-
-                // mengambil nilai S't-1 dan S''t-1 sebelumnya
-                $S_prime_prev = $smoothedValues[$productId]['S_prime'];
-                $S_double_prime_prev = $smoothedValues[$productId]['S_double_prime'];
-
-                // perhitungan formula 1: S't = alpha * Xt + (1 - alpha) * S't-1
-                $S_prime_current = $alpha * $quantity + (1 - $alpha) * $S_prime_prev;
-
-                // perhitungan formula 2: S''t = alpha * S't + (1 - alpha) * S''t-1
-                $S_double_prime_current = $alpha * $S_prime_current + (1 - $alpha) * $S_double_prime_prev;
-
-                // menyimpan nilai S't dan S''t saat ini untuk iterasi berikutnya
-                $smoothedValues[$productId]['S_prime'] = $S_prime_current;
-                $smoothedValues[$productId]['S_double_prime'] = $S_double_prime_current;
-                
-                // mengupdate nilai transaksi pertama dan terakhir
-                $firstTransactionDates[$productId] = $firstTransactionDates[$productId] ?? $transactionDate;
-                $lastTransactionDates[$productId] = $lastTransactionDates[$productId] ?? $transactionDate;
-
-                if ($transactionDate->lt($firstTransactionDates[$productId])) {
-                    $firstTransactionDates[$productId] = $transactionDate;
-                }
-                if ($transactionDate->gt($lastTransactionDates[$productId])) {
-                    $lastTransactionDates[$productId] = $transactionDate;
-                }
-
-                // menginisialisasi nilai raw sales jika belum ada
-                if (!isset($weightedSales[$productId])) {
-                    $weightedSales[$productId] = ['raw' => 0, 'weighted' => 0];
-                }
-                // nilai Kumulatif raw sales
-                $weightedSales[$productId]['raw'] += $quantity;
-                
-                // menggunakan S't sebagai representasi nilai smoothing untuk weighted sales, kalau tujuan akhir adalah ramalan S(t+m), akan dihitung a_t dan b_t di sini. Mengingat output yang ada adalah weighted sales, maka bisa menyimpan S_prime_current atau a_t sebagai nilai weighted
-                
-                // perhitungan formula 3: at = 2S't - S''t
-                $a_t = 2 * $S_prime_current - $S_double_prime_current;
-
-                // perhitungan formula 4: bt = (alpha / (1-alpha)) * (S't - S''t) serta memastikan (1 - alpha) tidak nol
-                $denom = (1 - $alpha);
-                $b_t = ($denom != 0) ? ($alpha / $denom) * ($S_prime_current - $S_double_prime_current) : 0;
-                
-                // untuk S_{t+m}, dibutuhkan nilai 'm'. Karena ini bukan fungsi peramalan, menyimpan 'a_t' sebagai nilai weighted akhir untuk setiap produk. 
-
-                // untuk meramalkan atau prediksi, 'm' perlu ditentukan di sini atau sebagai parameter.
-                // weighted sales mewakili nilai saat ini.
-                $weightedSales[$productId]['weighted'] = $a_t; // menggunakan a_t sebagai weighted sales
-            }
+        if ($transactions->isEmpty()) {
+            return response()->json(['message' => 'Tidak ada transaksi.']);
         }
 
-        foreach ($weightedSales as $productId => &$sales) {
-            // perhitungan selisihHari dan bobotWaktuTambahan ini adalah pembobotan waktu terpisah, untuk menghitung selisih hari.
-           
-            // hasil weighted sudah didasarkan pada a_t dari double exponential smoothing.
-            $firstTransactionDate = Carbon::parse($firstTransactionDates[$productId]);
-            $lastTransactionDate = Carbon::parse($lastTransactionDates[$productId]);
-            $selisihHari = $firstTransactionDate->diffInDays($lastTransactionDate);
-            $bobotWaktuTambahan = log(1 + max($selisihHari, 1)); // Hindari log(0)
+        $alpha = 0.005;
+        $salesData = [];
+        $weightedSales = [];
 
-            $productDateDifferences[$productId] = $selisihHari;
-            $productTimeWeights[$productId] = round($bobotWaktuTambahan, 4);
-            
-            // ini akan mengalikan hasil a_t dengan bobot waktu tambahan, mempertimbangkan untuk tidak menerapkan ini jika hanya ingin hasil murni DES di weighted.
-            $sales['weighted'] *= $bobotWaktuTambahan; 
+        foreach ($transactions as $row) {
+            $productId = $row->product_id;
+            $firstDate = Carbon::parse($row->first_date);
+            $lastDate = Carbon::parse($row->last_date);
+            $daysDiff = $firstDate->diffInDays($lastDate);
+            $timeWeight = log(1 + max($daysDiff, 1));
 
-            SalesCount::updateOrCreate(
-                ['product_id' => $productId, 'transaction_date' => $Tmax],
-                [
-                    'raw_sales' => $sales['raw'],
-                    'weighted_sales' => $sales['weighted'],
-                    'days_between_first_last_transaction' => $productDateDifferences[$productId],
-                    'time_weight' => $productTimeWeights[$productId]
-                ]
+            // Double exponential smoothing - simplifikasi: gunakan total_quantity sebagai Xt
+            $S_prime = $row->total_quantity;
+            $S_double_prime = $row->total_quantity;
+            $a_t = 2 * $S_prime - $S_double_prime;
+
+            $weighted = $a_t * $timeWeight;
+
+            $weightedSales[$productId] = $weighted;
+
+            $salesData[] = [
+                'product_id' => $productId,
+                'transaction_date' => Carbon::parse($row->last_date),
+                'raw_sales' => $row->total_quantity,
+                'weighted_sales' => $weighted,
+                'days_between_first_last_transaction' => $daysDiff,
+                'time_weight' => round($timeWeight, 4),
+                'updated_at' => now(),
+                'created_at' => now()
+            ];
+        }
+
+        // Bulk upsert
+        foreach (array_chunk($salesData, 500) as $chunk) {
+            SalesCount::upsert(
+                $chunk,
+                ['product_id', 'transaction_date'],
+                ['raw_sales', 'weighted_sales', 'days_between_first_last_transaction', 'time_weight', 'updated_at']
             );
         }
 
-        $products = Product::whereIn('id', array_keys($weightedSales))->get()->keyBy('id');
-
-        return response()->json(compact(
-            'transactions',
-            'weightedSales',
-            'products',
-            'firstTransactionDates',
-            'lastTransactionDates',
-            'productDateDifferences',
-            'productTimeWeights',
-            'Tmax'
-        ));
+        return response()->json([
+            'weightedSales' => $weightedSales
+        ]);
     }
+
 
     // public function countAccuracy()
     // {
@@ -2634,7 +2693,7 @@ class AnalysisController extends Controller
     //             $entropyValues[$productId] = 0;
     //         }
     //     }
-        
+
     //     $gainValues = [];
     //     // Untuk Gain (Gambar 2), ini adalah tantangan terbesar tanpa perubahan struktur.
     //     // Jika kita harus menggunakan formula Gain persis, kita perlu mendefinisikan atribut A
@@ -2720,137 +2779,199 @@ class AnalysisController extends Controller
     //         'notifications' => $highAccuracyNotifications, // Tambahkan ke response
     //     ]);
     // }
-    
+
+    // public function countAccuracy()
+    // {
+    //     $transactions = Transaction::with('details.product')->get();
+    //     if ($transactions->isEmpty()) {
+    //         return response()->json(['message' => 'Tidak ada prediksi karena tidak ada data transaksi.']);
+    //     }
+
+    //     $tMax = Carbon::parse(Transaction::max('transaction_date'));
+    //     $lambda = 0.005;
+    //     $weightedSales = [];
+    //     $firstTransactionDates = [];
+
+    //     foreach ($transactions as $transaction) {
+    //         $t = Carbon::parse($transaction->transaction_date);
+    //         $diffDays = $t->diffInDays($tMax);
+    //         $weight = exp(-$lambda * $diffDays);
+
+    //         foreach ($transaction->details as $detail) {
+    //             $productId = $detail->product->id;
+    //             $quantity = $detail->quantity;
+    //             $firstTransactionDates[$productId] = $firstTransactionDates[$productId] ?? $t;
+
+    //             if ($t->lt($firstTransactionDates[$productId])) {
+    //                 $firstTransactionDates[$productId] = $t;
+    //             }
+
+    //             $weightedSales[$productId] = ($weightedSales[$productId] ?? 0) + ($quantity * $weight);
+    //         }
+    //     }
+
+    //     foreach ($weightedSales as $productId => &$sales) {
+    //         $firstTransactionDate = Carbon::parse($firstTransactionDates[$productId]);
+    //         $productAge = $firstTransactionDate->diffInDays($tMax);
+    //         $sales *= log(1 + max($productAge, 1)); // Hindari log(0)
+    //     }
+
+    //     if (empty($weightedSales)) {
+    //         return response()->json(['message' => 'Tidak ada prediksi karena tidak ada data transaksi.']);
+    //     }
+
+    //     $totalWeightedSales = array_sum($weightedSales); // adalah |S| dalam konteks ini
+    //     $entropyValues = []; // menyimpan -pi * log2(pi) untuk setiap kelas (produk)
+    //     $epsilon = 1e-10; // menghindari log(0)
+
+    //     // menghitung E(S) / Overall Entropy 
+    //     // memperlakukan setiap produk sebagai kelas dalam himpunan S.
+    //     $overallEntropy = 0;
+    //     foreach ($weightedSales as $productId => $sales) {
+    //         $probability = ($totalWeightedSales > 0) ? $sales / $totalWeightedSales : 0;
+    //         if ($probability > 0) { // Hanya hitung jika probabilitas > 0 untuk menghindari log(0)
+    //             $term = -$probability * log($probability, 2); // Formula Entropy Gambar 1
+    //             $entropyValues[$productId] = $term; // Menyimpan kontribusi setiap produk
+    //             $overallEntropy += $term;
+    //         } else {
+    //             $entropyValues[$productId] = 0;
+    //         }
+    //     }
+
+    //     $gainValues = [];
+    //     // gain di sini adalah selisih antara Overall Entropy dengan kontribusi entropy individu dari masing-masing produk (seperti sebelumnya), ini adalah Gain Individual Produk, bukan Information Gain untuk pemilihan atribut C4.5.
+
+    //     foreach ($weightedSales as $productId => $sales) {
+    //         // mempertahankan perhitungan gain sebagai selisih overall entropy dengan entropy parsial produk tersebut
+    //         $gainValues[$productId] = $overallEntropy - $entropyValues[$productId];
+    //     }
+
+    //     $maxWeightedSales = max($weightedSales) ?: 1; // menghindari divide by zero
+    //     $accuracy = collect($weightedSales)->map(fn($s) => round(($s / $maxWeightedSales) * 100, 2));
+
+    //     foreach ($gainValues as $productId => $gain) {
+    //         EntropyGain::updateOrCreate(
+    //             ['product_id' => $productId],
+    //             [
+    //                 'entropy' => round($entropyValues[$productId], 6), // -pi*log2(pi) per produk
+    //                 'gain' => round($gain, 6)
+    //             ]
+    //         );
+    //     }
+
+    //     // stok per tanggal expired
+    //     $productsData = Product::whereIn('id', array_keys($weightedSales))
+    //         ->with('stocks')
+    //         ->get();
+
+    //     $products = $productsData->keyBy('id')->map(function ($product) {
+    //         return [
+    //             'name' => $product->name,
+    //             'code' => $product->code,
+    //             'condition' => $product->condition,
+    //             'price' => $product->price,
+    //             'photo' => $product->photo,
+    //             'category_name' => $product->category->name,
+    //             'stocks' => $product->stocks->sum('stock')
+    //         ];
+    //     });
+
+    //     // mengecek accuracy yang diatas 90% akan membuat notifikasi dan disimpan
+    //     $highAccuracyNotifications = [];
+
+    //     foreach ($accuracy as $productId => $accValue) {
+    //         if ($accValue > 85) {
+    //             $product = Product::find($productId);
+    //             if ($product) {
+    //                 $message = "{$product->name} berpeluang {$accValue}% menjadi produk terlaris.";
+
+    //                 $existing = Notification::where('message', $message)
+    //                     ->where('notification_type', 'Produk Terlaris')
+    //                     ->first();
+
+    //                 if (!$existing) {
+    //                     Notification::create([
+    //                         'message' => $message,
+    //                         'notification_type' => 'Produk Terlaris',
+    //                         'notification_time' => now()
+    //                     ]);
+    //                     $highAccuracyNotifications[] = $message;
+    //                 }
+    //             }
+    //         }
+    //     }
+
+    //     $decisionTree = $this->buildDecisionTree($gainValues, $accuracy, $products);
+
+    //     return response()->json([
+    //         'accuracy' => $accuracy,
+    //         'products' => $products,
+    //         'entropyValues' => $entropyValues,
+    //         'gainValues' => $gainValues,
+    //         'decisionTree' => $decisionTree,
+    //         'notifications' => $highAccuracyNotifications, // Tambahkan ke response
+    //     ]);
+    // }
+
     public function countAccuracy()
     {
-        $transactions = Transaction::with('details.product')->get();
+        // 1. Ambil total weighted quantity per product dari DB
+        $tMax = Transaction::max('transaction_date');
+
+        $transactions = Transaction::join('transaction_details as td', 'transactions.id', '=', 'td.transaction_id')
+            ->selectRaw('td.product_id, SUM(td.quantity * POW(0.995, DATEDIFF(?, transactions.transaction_date))) as weighted_sales, MIN(transactions.transaction_date) as first_date', [$tMax])
+            ->groupBy('td.product_id')
+            ->get();
+
         if ($transactions->isEmpty()) {
-            return response()->json(['message' => 'Tidak ada prediksi karena tidak ada data transaksi.']);
+            return response()->json(['message' => 'Tidak ada transaksi.']);
         }
 
-        $tMax = Carbon::parse(Transaction::max('transaction_date'));
-        $lambda = 0.005;
-        $weightedSales = [];
-        $firstTransactionDates = [];
-
-        foreach ($transactions as $transaction) {
-            $t = Carbon::parse($transaction->transaction_date);
-            $diffDays = $t->diffInDays($tMax);
-            $weight = exp(-$lambda * $diffDays);
-
-            foreach ($transaction->details as $detail) {
-                $productId = $detail->product->id;
-                $quantity = $detail->quantity;
-                $firstTransactionDates[$productId] = $firstTransactionDates[$productId] ?? $t;
-
-                if ($t->lt($firstTransactionDates[$productId])) {
-                    $firstTransactionDates[$productId] = $t;
-                }
-
-                $weightedSales[$productId] = ($weightedSales[$productId] ?? 0) + ($quantity * $weight);
-            }
-        }
-
-        foreach ($weightedSales as $productId => &$sales) {
-            $firstTransactionDate = Carbon::parse($firstTransactionDates[$productId]);
-            $productAge = $firstTransactionDate->diffInDays($tMax);
-            $sales *= log(1 + max($productAge, 1)); // Hindari log(0)
-        }
-
-        if (empty($weightedSales)) {
-            return response()->json(['message' => 'Tidak ada prediksi karena tidak ada data transaksi.']);
-        }
-    
-        $totalWeightedSales = array_sum($weightedSales); // adalah |S| dalam konteks ini
-        $entropyValues = []; // menyimpan -pi * log2(pi) untuk setiap kelas (produk)
-        $epsilon = 1e-10; // menghindari log(0)
-
-        // menghitung E(S) / Overall Entropy 
-        // memperlakukan setiap produk sebagai kelas dalam himpunan S.
-        $overallEntropy = 0;
-        foreach ($weightedSales as $productId => $sales) {
-            $probability = ($totalWeightedSales > 0) ? $sales / $totalWeightedSales : 0;
-            if ($probability > 0) { // Hanya hitung jika probabilitas > 0 untuk menghindari log(0)
-                $term = -$probability * log($probability, 2); // Formula Entropy Gambar 1
-                $entropyValues[$productId] = $term; // Menyimpan kontribusi setiap produk
-                $overallEntropy += $term;
-            } else {
-                $entropyValues[$productId] = 0;
-            }
-        }
-        
+        $totalWeighted = $transactions->sum('weighted_sales');
+        $entropyValues = [];
         $gainValues = [];
-        // gain di sini adalah selisih antara Overall Entropy dengan kontribusi entropy individu dari masing-masing produk (seperti sebelumnya), ini adalah Gain Individual Produk, bukan Information Gain untuk pemilihan atribut C4.5.
+        $accuracy = [];
 
-        foreach ($weightedSales as $productId => $sales) {
-            // mempertahankan perhitungan gain sebagai selisih overall entropy dengan entropy parsial produk tersebut
-            $gainValues[$productId] = $overallEntropy - $entropyValues[$productId];
+        foreach ($transactions as $row) {
+            $productId = $row->product_id;
+            $sales = $row->weighted_sales;
+
+            // Tambahkan bobot waktu: log(age)
+            $ageDays = Carbon::parse($row->first_date)->diffInDays(Carbon::parse($tMax));
+            $weighted = $sales * log(1 + max($ageDays, 1));
+
+            $prob = $totalWeighted > 0 ? $weighted / $totalWeighted : 0;
+            $entropy = $prob > 0 ? -$prob * log($prob, 2) : 0;
+
+            $entropyValues[$productId] = $entropy;
+            $gainValues[$productId] = max(0, $totalWeighted - $entropy); // tetap heuristic
+            $accuracy[$productId] = round(($weighted / max($transactions->max('weighted_sales'), 1)) * 100, 2);
         }
-        
-        $maxWeightedSales = max($weightedSales) ?: 1; // menghindari divide by zero
-        $accuracy = collect($weightedSales)->map(fn($s) => round(($s / $maxWeightedSales) * 100, 2));
 
+        // Bulk upsert
+        $entropyData = [];
         foreach ($gainValues as $productId => $gain) {
-            EntropyGain::updateOrCreate(
-                ['product_id' => $productId],
-                [
-                    'entropy' => round($entropyValues[$productId], 6), // -pi*log2(pi) per produk
-                    'gain' => round($gain, 6)
-                ]
+            $entropyData[] = [
+                'product_id' => $productId,
+                'entropy' => round($entropyValues[$productId], 6),
+                'gain' => round($gain, 6),
+                'updated_at' => now(),
+                'created_at' => now()
+            ];
+        }
+
+        foreach (array_chunk($entropyData, 500) as $chunk) {
+            EntropyGain::upsert(
+                $chunk,
+                ['product_id'],
+                ['entropy', 'gain', 'updated_at']
             );
         }
 
-        // stok per tanggal expired
-        $productsData = Product::whereIn('id', array_keys($weightedSales))
-            ->with('stocks')
-            ->get();
-
-        $products = $productsData->keyBy('id')->map(function ($product) {
-            return [
-                'name' => $product->name,
-                'code' => $product->code,
-                'condition' => $product->condition,
-                'price' => $product->price,
-                'photo' => $product->photo,
-                'category_name' => $product->category->name,
-                'stocks' => $product->stocks->sum('stock')
-            ];
-        });
-
-        // mengecek accuracy yang diatas 90% akan membuat notifikasi dan disimpan
-        $highAccuracyNotifications = [];
-
-        foreach ($accuracy as $productId => $accValue) {
-            if ($accValue > 85) {
-                $product = Product::find($productId);
-                if ($product) {
-                    $message = "{$product->name} berpeluang {$accValue}% menjadi produk terlaris.";
-
-                    $existing = Notification::where('message', $message)
-                        ->where('notification_type', 'Produk Terlaris')
-                        ->first();
-
-                    if (!$existing) {
-                        Notification::create([
-                            'message' => $message,
-                            'notification_type' => 'Produk Terlaris',
-                            'notification_time' => now()
-                        ]);
-                        $highAccuracyNotifications[] = $message;
-                    }
-                }
-            }
-        }
-
-        $decisionTree = $this->buildDecisionTree($gainValues, $accuracy, $products);
-
         return response()->json([
             'accuracy' => $accuracy,
-            'products' => $products,
             'entropyValues' => $entropyValues,
-            'gainValues' => $gainValues,
-            'decisionTree' => $decisionTree,
-            'notifications' => $highAccuracyNotifications, // Tambahkan ke response
+            'gainValues' => $gainValues
         ]);
     }
 
@@ -2863,7 +2984,7 @@ class AnalysisController extends Controller
         // mengurutkan berdasarkan akurasi dari tinggi ke rendah
         $accuracy = is_array($accuracy) ? $accuracy : $accuracy->toArray(); // konversi Collection ke array
         arsort($accuracy); // urutkan dari akurasi tertinggi ke terendah
-        
+
         $bestAttributeProductId = array_keys($gainValues, max($gainValues))[0];
         $rootProduct = $products[$bestAttributeProductId] ?? null;
 
