@@ -3002,6 +3002,7 @@ class AnalysisController extends Controller
         }
 
         $totalWeighted = $transactions->sum('weighted_sales');
+        
         $entropyValues = [];
         $gainValues = [];
         $accuracy = [];
@@ -3032,6 +3033,24 @@ class AnalysisController extends Controller
                 'condition' => $row->condition,
                 'photo' => $row->photo
             ];
+        }
+
+        foreach ($transactions as $row) {
+            $productId = $row->product_id;
+
+            $ageDays = Carbon::parse($row->first_date)->diffInDays(Carbon::parse($tMax));
+            $weighted = $row->weighted_sales * log(1 + max($ageDays, 1));
+
+            $prob = $totalWeighted > 0 ? $weighted / $totalWeighted : 0;
+            $entropy = $prob > 0 ? -$prob * log($prob, 2) : 0;
+
+            $entropyValues[$productId] = $entropy;
+
+            // Gain wajar = total entropy - entropy produk (proporsional)
+            $gainValues[$productId] = round(array_sum($entropyValues) - $entropy, 6);
+
+            // Accuracy max 100%
+            $accuracy[$productId] = round($prob * 100, 2);
         }
 
         // Bulk upsert entropy & gain tetap seperti sebelumnya
