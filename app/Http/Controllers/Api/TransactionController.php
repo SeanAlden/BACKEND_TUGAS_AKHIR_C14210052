@@ -650,8 +650,8 @@ class TransactionController extends Controller
             ->limit(3)
             ->get();
 
-        // Grafik penjualan (8 bulan terakhir dari current date)
-        $salesByMonth = Transaction::whereBetween('transaction_date', [Carbon::now()->subMonths(8), Carbon::now()])
+        // Grafik penjualan (12 bulan terakhir dari current date)
+        $salesByMonth = Transaction::whereBetween('transaction_date', [Carbon::now()->subMonths(12), Carbon::now()])
             ->selectRaw('DATE_FORMAT(transaction_date, "%Y-%m") as month, SUM(gross_amount) as revenue')
             ->groupBy('month')
             ->orderBy('month')
