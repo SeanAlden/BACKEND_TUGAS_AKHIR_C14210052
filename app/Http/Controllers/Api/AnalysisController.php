@@ -2918,14 +2918,83 @@ class AnalysisController extends Controller
     //     ]);
     // }
 
+    // public function countAccuracy()
+    // {
+    //     // 1. Ambil total weighted quantity per product dari DB
+    //     $tMax = Transaction::max('transaction_date');
+
+    //     $transactions = Transaction::join('transaction_details as td', 'transactions.id', '=', 'td.transaction_id')
+    //         ->selectRaw('td.product_id, SUM(td.quantity * POW(0.995, DATEDIFF(?, transactions.transaction_date))) as weighted_sales, MIN(transactions.transaction_date) as first_date', [$tMax])
+    //         ->groupBy('td.product_id')
+    //         ->get();
+
+    //     if ($transactions->isEmpty()) {
+    //         return response()->json(['message' => 'Tidak ada transaksi.']);
+    //     }
+
+    //     $totalWeighted = $transactions->sum('weighted_sales');
+    //     $entropyValues = [];
+    //     $gainValues = [];
+    //     $accuracy = [];
+
+    //     foreach ($transactions as $row) {
+    //         $productId = $row->product_id;
+    //         $sales = $row->weighted_sales;
+
+    //         // Tambahkan bobot waktu: log(age)
+    //         $ageDays = Carbon::parse($row->first_date)->diffInDays(Carbon::parse($tMax));
+    //         $weighted = $sales * log(1 + max($ageDays, 1));
+
+    //         $prob = $totalWeighted > 0 ? $weighted / $totalWeighted : 0;
+    //         $entropy = $prob > 0 ? -$prob * log($prob, 2) : 0;
+
+    //         $entropyValues[$productId] = $entropy;
+    //         $gainValues[$productId] = max(0, $totalWeighted - $entropy); // tetap heuristic
+    //         $accuracy[$productId] = round(($weighted / max($transactions->max('weighted_sales'), 1)) * 100, 2);
+    //     }
+
+    //     // Bulk upsert
+    //     $entropyData = [];
+    //     foreach ($gainValues as $productId => $gain) {
+    //         $entropyData[] = [
+    //             'product_id' => $productId,
+    //             'entropy' => round($entropyValues[$productId], 6),
+    //             'gain' => round($gain, 6),
+    //             'updated_at' => now(),
+    //             'created_at' => now()
+    //         ];
+    //     }
+
+    //     foreach (array_chunk($entropyData, 500) as $chunk) {
+    //         EntropyGain::upsert(
+    //             $chunk,
+    //             ['product_id'],
+    //             ['entropy', 'gain', 'updated_at']
+    //         );
+    //     }
+
+    //     return response()->json([
+    //         'accuracy' => $accuracy,
+    //         'entropyValues' => $entropyValues,
+    //         'gainValues' => $gainValues
+    //     ]);
+    // }
+
     public function countAccuracy()
     {
-        // 1. Ambil total weighted quantity per product dari DB
+        // Ambil tanggal transaksi terakhir
         $tMax = Transaction::max('transaction_date');
 
+        // Join transaction_details dan products
         $transactions = Transaction::join('transaction_details as td', 'transactions.id', '=', 'td.transaction_id')
-            ->selectRaw('td.product_id, SUM(td.quantity * POW(0.995, DATEDIFF(?, transactions.transaction_date))) as weighted_sales, MIN(transactions.transaction_date) as first_date', [$tMax])
-            ->groupBy('td.product_id')
+            ->join('products as p', 'td.product_id', '=', 'p.id')
+            ->selectRaw(
+                'td.product_id, p.name, p.code, p.price, p.condition, p.photo, 
+            SUM(td.quantity * POW(0.995, DATEDIFF(?, transactions.transaction_date))) as weighted_sales, 
+            MIN(transactions.transaction_date) as first_date',
+                [$tMax]
+            )
+            ->groupBy('td.product_id', 'p.name', 'p.code', 'p.price', 'p.condition', 'p.photo')
             ->get();
 
         if ($transactions->isEmpty()) {
@@ -2936,12 +3005,12 @@ class AnalysisController extends Controller
         $entropyValues = [];
         $gainValues = [];
         $accuracy = [];
+        $productsData = [];
 
         foreach ($transactions as $row) {
             $productId = $row->product_id;
             $sales = $row->weighted_sales;
 
-            // Tambahkan bobot waktu: log(age)
             $ageDays = Carbon::parse($row->first_date)->diffInDays(Carbon::parse($tMax));
             $weighted = $sales * log(1 + max($ageDays, 1));
 
@@ -2951,9 +3020,19 @@ class AnalysisController extends Controller
             $entropyValues[$productId] = $entropy;
             $gainValues[$productId] = max(0, $totalWeighted - $entropy); // tetap heuristic
             $accuracy[$productId] = round(($weighted / max($transactions->max('weighted_sales'), 1)) * 100, 2);
+
+            // Simpan data produk
+            $productsData[$productId] = [
+                'id' => $productId,
+                'name' => $row->name,
+                'code' => $row->code,
+                'price' => $row->price,
+                'condition' => $row->condition,
+                'photo' => $row->photo
+            ];
         }
 
-        // Bulk upsert
+        // Bulk upsert entropy & gain tetap seperti sebelumnya
         $entropyData = [];
         foreach ($gainValues as $productId => $gain) {
             $entropyData[] = [
@@ -2976,7 +3055,8 @@ class AnalysisController extends Controller
         return response()->json([
             'accuracy' => $accuracy,
             'entropyValues' => $entropyValues,
-            'gainValues' => $gainValues
+            'gainValues' => $gainValues,
+            'products' => array_values($productsData) // dikirim sebagai array
         ]);
     }
 
