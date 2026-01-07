@@ -2630,7 +2630,11 @@ class AnalysisController extends Controller
         }
 
         return response()->json([
-            'weightedSales' => $weightedSales
+            'weightedSales' => $weightedSales,
+            'productNames' => Product::whereIn('id', array_keys($weightedSales))
+                ->pluck('name', 'id'),
+            'productCodes' => Product::whereIn('id', array_keys($weightedSales))
+                ->pluck('code', 'id'),
         ]);
     }
 
