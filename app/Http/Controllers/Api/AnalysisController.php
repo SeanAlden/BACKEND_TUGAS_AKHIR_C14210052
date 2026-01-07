@@ -3019,7 +3019,8 @@ class AnalysisController extends Controller
 
             $entropyValues[$productId] = $entropy;
             $gainValues[$productId] = max(0, $totalWeighted - $entropy); // tetap heuristic
-            $accuracy[$productId] = round(($weighted / max($transactions->max('weighted_sales'), 1)) * 100, 2);
+            // $accuracy[$productId] = round(($weighted / max($transactions->max('weighted_sales'), 1)) * 100, 2);
+            $accuracy[$productId] = round(($row->weighted_sales / max($transactions->max('weighted_sales'), 1)) * 100, 2);
 
             // Simpan data produk
             $productsData[$productId] = [
