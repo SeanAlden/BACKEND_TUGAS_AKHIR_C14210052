@@ -2632,12 +2632,13 @@ class AnalysisController extends Controller
         return response()->json([
             'weightedSales' => $weightedSales,
             'productNames' => Product::whereIn('id', array_keys($weightedSales))
+                ->get()
                 ->pluck('name', 'id'),
             'productCodes' => Product::whereIn('id', array_keys($weightedSales))
+                ->get()
                 ->pluck('code', 'id'),
         ]);
     }
-
 
     // public function countAccuracy()
     // {
