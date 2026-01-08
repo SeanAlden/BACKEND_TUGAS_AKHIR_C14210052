@@ -2432,6 +2432,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use DB;
 use App\Models\Product;
 use App\Models\SalesCount;
 use App\Models\EntropyGain;
