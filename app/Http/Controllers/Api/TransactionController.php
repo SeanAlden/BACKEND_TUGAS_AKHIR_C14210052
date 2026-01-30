@@ -57,42 +57,100 @@ class TransactionController extends Controller
     // }
 
     // Menampilkan semua transaksi milik user yang login
+    // public function index()
+    // {
+    //     try {
+    //         $user = Auth::user();
+
+    //         if ($user->usertype === 'admin') {
+    //             // Jika admin, ambil semua transaksi
+    //             $transactions = Transaction::with(['details.product', 'statusHistories'])->get();
+    //         } else {
+    //             // Selain admin, ambil hanya transaksi milik user tersebut
+    //             $transactions = Transaction::with(['details.product', 'statusHistories'])
+    //                 ->where('user_id', $user->id)
+    //                 ->get();
+    //         }
+
+    //         $transactions = $transactions->map(function ($transaction) {
+    //             $transaction->shipping_time = $this->calculateShippingTime($transaction);
+
+    //             $transaction->products = $transaction->details->map(function ($detail) {
+    //                 return [
+    //                     'product_id' => $detail->product->id,
+    //                     'name' => $detail->product->name,
+    //                     'code' => $detail->product->code,
+    //                     'price' => $detail->product->price,
+    //                     'quantity' => $detail->quantity,
+    //                     'exp_date' => $detail->exp_date,
+    //                     'photo' => $detail->product->photo,
+    //                 ];
+    //             });
+
+    //             return $transaction;
+    //         });
+
+    //         return response()->json(['transactions' => $transactions], 200);
+    //     } catch (\Exception $e) {
+    //         return response()->json(['error' => 'Terjadi kesalahan saat mengambil data transaksi: ' . $e->getMessage()], 500);
+    //     }
+    // }
+
     public function index()
     {
         try {
             $user = Auth::user();
 
-            if ($user->usertype === 'admin') {
-                // Jika admin, ambil semua transaksi
-                $transactions = Transaction::with(['details.product', 'statusHistories'])->get();
-            } else {
-                // Selain admin, ambil hanya transaksi milik user tersebut
-                $transactions = Transaction::with(['details.product', 'statusHistories'])
-                    ->where('user_id', $user->id)
-                    ->get();
+            // 1. Gunakan query builder dengan seleksi kolom spesifik untuk mengurangi beban memori
+            // 2. Gunakan 'with' untuk eager loading agar tidak terjadi N+1 query
+            $query = Transaction::with([
+                'details' => function ($q) {
+                    // Hanya ambil kolom yang dibutuhkan dari tabel transaction_details
+                    $q->select('id', 'transaction_id', 'product_id', 'quantity', 'exp_date');
+                },
+                'details.product' => function ($q) {
+                    // HINDARI mengambil kolom 'description' yang panjang agar response lebih ringan
+                    $q->select('id', 'name', 'code', 'price', 'photo');
+                },
+                'statusHistories'
+            ]);
+
+            // Filter berdasarkan user type
+            if ($user->usertype !== 'admin') {
+                $query->where('user_id', $user->id);
             }
 
-            $transactions = $transactions->map(function ($transaction) {
+            // Gunakan cursor() atau lazy() jika data sangat besar, 
+            // tapi untuk kecepatan standar API, get() sudah cukup dengan seleksi kolom.
+            $transactions = $query->latest()->get();
+
+            // Transformasi data
+            $transactions->transform(function ($transaction) {
+                // Kalkulasi shipping time
                 $transaction->shipping_time = $this->calculateShippingTime($transaction);
 
+                // Map products array sesuai struktur yang diminta
                 $transaction->products = $transaction->details->map(function ($detail) {
                     return [
                         'product_id' => $detail->product->id,
-                        'name' => $detail->product->name,
-                        'code' => $detail->product->code,
-                        'price' => $detail->product->price,
-                        'quantity' => $detail->quantity,
-                        'exp_date' => $detail->exp_date,
-                        'photo' => $detail->product->photo,
+                        'name'       => $detail->product->name,
+                        'code'       => $detail->product->code,
+                        'price'      => $detail->product->price,
+                        'quantity'   => $detail->quantity,
+                        'exp_date'   => $detail->exp_date,
+                        'photo'      => $detail->product->photo,
                     ];
                 });
 
+                // Sesuai permintaan: Struktur JSON tetap dipertahankan
                 return $transaction;
             });
 
             return response()->json(['transactions' => $transactions], 200);
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Terjadi kesalahan saat mengambil data transaksi: ' . $e->getMessage()], 500);
+            return response()->json([
+                'error' => 'Terjadi kesalahan saat mengambil data transaksi: ' . $e->getMessage()
+            ], 500);
         }
     }
 
@@ -213,7 +271,6 @@ class TransactionController extends Controller
                 'products' => $details,
                 'status_histories' => $transaction->statusHistories
             ], 200);
-
         } catch (\Exception $e) {
             return response()->json(['error' => 'Transaksi tidak ditemukan atau Anda tidak memiliki akses.'], 404);
         }
