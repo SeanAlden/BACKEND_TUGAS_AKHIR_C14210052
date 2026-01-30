@@ -57,91 +57,42 @@ class TransactionController extends Controller
     // }
 
     // Menampilkan semua transaksi milik user yang login
-    // public function index()
-    // {
-    //     try {
-    //         $user = Auth::user();
-
-    //         if ($user->usertype === 'admin') {
-    //             // Jika admin, ambil semua transaksi
-    //             $transactions = Transaction::with(['details.product', 'statusHistories'])->get();
-    //         } else {
-    //             // Selain admin, ambil hanya transaksi milik user tersebut
-    //             $transactions = Transaction::with(['details.product', 'statusHistories'])
-    //                 ->where('user_id', $user->id)
-    //                 ->get();
-    //         }
-
-    //         $transactions = $transactions->map(function ($transaction) {
-    //             $transaction->shipping_time = $this->calculateShippingTime($transaction);
-
-    //             $transaction->products = $transaction->details->map(function ($detail) {
-    //                 return [
-    //                     'product_id' => $detail->product->id,
-    //                     'name' => $detail->product->name,
-    //                     'code' => $detail->product->code,
-    //                     'price' => $detail->product->price,
-    //                     'quantity' => $detail->quantity,
-    //                     'exp_date' => $detail->exp_date,
-    //                     'photo' => $detail->product->photo,
-    //                 ];
-    //             });
-
-    //             return $transaction;
-    //         });
-
-    //         return response()->json(['transactions' => $transactions], 200);
-    //     } catch (\Exception $e) {
-    //         return response()->json(['error' => 'Terjadi kesalahan saat mengambil data transaksi: ' . $e->getMessage()], 500);
-    //     }
-    // }
-
     public function index()
     {
         try {
             $user = Auth::user();
 
-            // 1. Inisialisasi query dengan pemilihan kolom spesifik
-            $query = Transaction::with([
-                'statusHistories',
-                'details.product:id,name,code,price,photo' // Hanya ambil kolom yang butuh
-            ]);
-
-            // 2. Filter berdasarkan user role
-            if ($user->usertype !== 'admin') {
-                $query->where('user_id', $user->id);
+            if ($user->usertype === 'admin') {
+                // Jika admin, ambil semua transaksi
+                $transactions = Transaction::with(['details.product', 'statusHistories'])->get();
+            } else {
+                // Selain admin, ambil hanya transaksi milik user tersebut
+                $transactions = Transaction::with(['details.product', 'statusHistories'])
+                    ->where('user_id', $user->id)
+                    ->get();
             }
 
-            // 3. Gunakan simplePaginate atau get() dengan seleksi kolom
-            // Jika data sangat besar, WAJIB gunakan paginate()
-            $transactions = $query->latest()->get();
+            $transactions = $transactions->map(function ($transaction) {
+                $transaction->shipping_time = $this->calculateShippingTime($transaction);
 
-            // 4. Transformasi data menggunakan koleksi yang lebih ringan
-            $data = $transactions->map(function ($transaction) {
-                return [
-                    'id' => $transaction->id,
-                    'shipping_time' => $this->calculateShippingTime($transaction),
-                    'status_histories' => $transaction->statusHistories,
-                    'products' => $transaction->details->map(function ($detail) {
-                        return [
-                            'product_id' => $detail->product->id,
-                            'name'       => $detail->product->name,
-                            'code'       => $detail->product->code,
-                            'price'      => $detail->product->price,
-                            'quantity'   => $detail->quantity,
-                            'exp_date'   => $detail->exp_date,
-                            'photo'      => $detail->product->photo,
-                        ];
-                    }),
-                    // Tambahkan field transaction lainnya yang dibutuhkan di sini
-                ];
+                $transaction->products = $transaction->details->map(function ($detail) {
+                    return [
+                        'product_id' => $detail->product->id,
+                        'name' => $detail->product->name,
+                        'code' => $detail->product->code,
+                        'price' => $detail->product->price,
+                        'quantity' => $detail->quantity,
+                        'exp_date' => $detail->exp_date,
+                        'photo' => $detail->product->photo,
+                    ];
+                });
+
+                return $transaction;
             });
 
-            return response()->json(['transactions' => $data], 200);
+            return response()->json(['transactions' => $transactions], 200);
         } catch (\Exception $e) {
-            return response()->json([
-                'error' => 'Terjadi kesalahan: ' . $e->getMessage()
-            ], 500);
+            return response()->json(['error' => 'Terjadi kesalahan saat mengambil data transaksi: ' . $e->getMessage()], 500);
         }
     }
 
@@ -262,6 +213,7 @@ class TransactionController extends Controller
                 'products' => $details,
                 'status_histories' => $transaction->statusHistories
             ], 200);
+
         } catch (\Exception $e) {
             return response()->json(['error' => 'Transaksi tidak ditemukan atau Anda tidak memiliki akses.'], 404);
         }
@@ -615,73 +567,36 @@ class TransactionController extends Controller
     // }
 
     // Fungsi bantu untuk estimasi waktu pengiriman
-    // private function calculateShippingTime($transaction)
-    // {
-    //     if (!$transaction->transaction_date || !$transaction->shipping_method) {
-    //         return null;
-    //     }
-
-    //     // $transactionTime = Carbon::parse($transaction->transaction_date);
-    //     $transactionTime = Carbon::parse($transaction->transaction_date)->timezone('Asia/Jakarta');
-
-
-    //     if ($transaction->shipping_method === 'Reguler') {
-    //         // $start = $transactionTime->copy()->addHours(3);
-    //         $start = $transactionTime->copy()->addMinutes(30);
-    //         $end = $start->copy()->addMinutes(60);
-    //         return 'Waktu Pengiriman : ' . $start->translatedFormat('d F Y, H:i') . ' - ' . $end->translatedFormat('H:i');
-    //     } elseif ($transaction->shipping_method === 'Express') {
-    //         // $start = $transactionTime->copy()->addHour();
-    //         $start = $transactionTime->copy()->addMinutes(30);
-    //         $end = $start->copy()->addMinutes(180);
-    //         return 'Waktu Pengiriman : ' . $start->translatedFormat('d F Y, H:i') . ' - ' . $end->translatedFormat('H:i');
-    //     } elseif ($transaction->shipping_method === 'Ambil di tempat') {
-    //         $start = $transactionTime->copy();
-    //         $end = $start->copy()->addMinutes(0);
-    //         // return 'Waktu Pengiriman : ' . $start->translatedFormat('d F Y, H:i');
-    //         return 'Waktu Pengiriman : - ';
-    //     } else {
-    //         return null;
-    //     }
-
-    //     // return 'Waktu Pengiriman : ' . $start->translatedFormat('d F Y, H:i') . ' - ' . $end->translatedFormat('H:i');
-    // }
-
     private function calculateShippingTime($transaction)
     {
-        // 1. Early return: Pastikan data ada sebelum diproses
         if (!$transaction->transaction_date || !$transaction->shipping_method) {
             return null;
         }
 
-        // 2. Parse satu kali saja. Gunakan CarbonImmutable jika ingin menghindari ->copy()
-        $start = \Carbon\Carbon::parse($transaction->transaction_date)
-            ->timezone('Asia/Jakarta');
+        // $transactionTime = Carbon::parse($transaction->transaction_date);
+        $transactionTime = Carbon::parse($transaction->transaction_date)->timezone('Asia/Jakarta');
 
-        // 3. Gunakan Match Expression (PHP 8.x) untuk logika yang lebih bersih
-        // dan menghindari pengecekan if-else yang panjang
-        $result = match ($transaction->shipping_method) {
-            'Reguler' => [
-                'start' => $start->addMinutes(30),
-                'end'   => $start->copy()->addMinutes(90), // 30 + 60
-            ],
-            'Express' => [
-                'start' => $start->addMinutes(30),
-                'end'   => $start->copy()->addMinutes(210), // 30 + 180
-            ],
-            'Ambil di tempat' => 'Waktu Pengiriman : - ',
-            default => null,
-        };
 
-        // 4. Return format string
-        if (is_array($result)) {
-            return 'Waktu Pengiriman : ' .
-                $result['start']->translatedFormat('d F Y, H:i') .
-                ' - ' .
-                $result['end']->format('H:i');
+        if ($transaction->shipping_method === 'Reguler') {
+            // $start = $transactionTime->copy()->addHours(3);
+            $start = $transactionTime->copy()->addMinutes(30);
+            $end = $start->copy()->addMinutes(60);
+            return 'Waktu Pengiriman : ' . $start->translatedFormat('d F Y, H:i') . ' - ' . $end->translatedFormat('H:i');
+        } elseif ($transaction->shipping_method === 'Express') {
+            // $start = $transactionTime->copy()->addHour();
+            $start = $transactionTime->copy()->addMinutes(30);
+            $end = $start->copy()->addMinutes(180);
+            return 'Waktu Pengiriman : ' . $start->translatedFormat('d F Y, H:i') . ' - ' . $end->translatedFormat('H:i');
+        } elseif ($transaction->shipping_method === 'Ambil di tempat') {
+            $start = $transactionTime->copy();
+            $end = $start->copy()->addMinutes(0);
+            // return 'Waktu Pengiriman : ' . $start->translatedFormat('d F Y, H:i');
+            return 'Waktu Pengiriman : - ';
+        } else {
+            return null;
         }
 
-        return $result;
+        // return 'Waktu Pengiriman : ' . $start->translatedFormat('d F Y, H:i') . ' - ' . $end->translatedFormat('H:i');
     }
 
     // Untuk menampilkan data pada dashboard
