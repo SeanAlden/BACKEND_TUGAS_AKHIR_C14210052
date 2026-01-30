@@ -8,6 +8,7 @@
     "require": {
         "php": "^8.2",
         "anhskohbo/no-captcha": "^3.0",
+        "cloudinary-labs/cloudinary-laravel": "*",
         "laravel/fortify": "^1.25",
         "laravel/framework": "^11.31",
         "laravel/sanctum": "^4.0",
@@ -60,7 +61,7 @@
     },
     "extra": {
         "laravel": {
-            "dont-discover": []
+            "dont-discover": ["cloudinary-labs/cloudinary-laravel"]
         }
     },
     "config": {

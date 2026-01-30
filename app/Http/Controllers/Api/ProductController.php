@@ -20,31 +20,85 @@ use App\Models\ProductStatusHistoryDetail;
 class ProductController extends Controller
 {
     // Fungsi untuk menampilkan data produk
+    // public function index()
+    // {
+    //     $products = Product::with(['category', 'stocks'])->withCount('transactionDetails')->get();
+
+    //     foreach ($products as $product) {
+    //         foreach ($product->stocks as $stock) {
+    //             if ($stock->stock < 7) {
+    //                 $message = "{$product->name} dengan kadaluarsa " . Carbon::parse($stock->exp_date)->format('d-m-Y') . " tersisa {$stock->stock} stok lagi";
+    //                 Notification::firstOrCreate(
+    //                     ['message' => $message, 'notification_type' => 'Sisa Stok'],
+    //                     ['notification_time' => now()]
+    //                 );
+    //             }
+
+    //             $expDate = Carbon::parse($stock->exp_date);
+    //             $now = Carbon::now();
+    //             $soon = $now->copy()->addDays(90);
+
+    //             if ($expDate->greaterThanOrEqualTo($now) && $expDate->lessThanOrEqualTo($soon)) {
+    //                 $message = "Pada {$product->name}, terdapat stok dengan tanggal expired " . $expDate->format('d-m-Y') . ' yang sudah dekat';
+    //                 Notification::firstOrCreate(
+    //                     ['message' => $message, 'notification_type' => 'Tanggal Kadaluarsa'],
+    //                     ['notification_time' => now()]
+    //                 );
+    //             }
+    //         }
+    //     }
+
+    //     return response()->json([
+    //         'success' => true,
+    //         'data' => $products
+    //     ], 200);
+    // }
+
     public function index()
     {
-        $products = Product::with(['category', 'stocks'])->withCount('transactionDetails')->get();
+        // 1. Ambil data dengan eager loading yang efisien
+        $products = Product::with(['category', 'stocks'])
+            ->withCount('transactionDetails')
+            ->get();
+
+        $notifications = [];
+        $now = now();
+        $soon = now()->addDays(90);
 
         foreach ($products as $product) {
             foreach ($product->stocks as $stock) {
+                $expDate = \Carbon\Carbon::parse($stock->exp_date);
+
+                // Cek Stok Rendah
                 if ($stock->stock < 7) {
-                    $message = "{$product->name} dengan kadaluarsa " . Carbon::parse($stock->exp_date)->format('d-m-Y') . " tersisa {$stock->stock} stok lagi";
-                    Notification::firstOrCreate(
-                        ['message' => $message, 'notification_type' => 'Sisa Stok'],
-                        ['notification_time' => now()]
-                    );
+                    $notifications[] = [
+                        'message' => "{$product->name} dengan kadaluarsa " . $expDate->format('d-m-Y') . " tersisa {$stock->stock} stok lagi",
+                        'notification_type' => 'Sisa Stok',
+                        'notification_time' => $now,
+                        'created_at' => $now, // Penting jika menggunakan insert
+                        'updated_at' => $now
+                    ];
                 }
 
-                $expDate = Carbon::parse($stock->exp_date);
-                $now = Carbon::now();
-                $soon = $now->copy()->addDays(90);
-
-                if ($expDate->greaterThanOrEqualTo($now) && $expDate->lessThanOrEqualTo($soon)) {
-                    $message = "Pada {$product->name}, terdapat stok dengan tanggal expired " . $expDate->format('d-m-Y') . ' yang sudah dekat';
-                    Notification::firstOrCreate(
-                        ['message' => $message, 'notification_type' => 'Tanggal Kadaluarsa'],
-                        ['notification_time' => now()]
-                    );
+                // Cek Tanggal Kadaluarsa
+                if ($expDate->between($now, $soon)) {
+                    $notifications[] = [
+                        'message' => "Pada {$product->name}, terdapat stok dengan tanggal expired " . $expDate->format('d-m-Y') . ' yang sudah dekat',
+                        'notification_type' => 'Tanggal Kadaluarsa',
+                        'notification_time' => $now,
+                        'created_at' => $now,
+                        'updated_at' => $now
+                    ];
                 }
+            }
+        }
+
+        // 2. Batch Insert untuk performa tinggi
+        // Menggunakan insertOrIgnore agar data duplikat tidak menyebabkan error dan tidak perlu cek satu-satu
+        if (!empty($notifications)) {
+            // Chunking untuk menghindari limitasi parameter database jika data sangat besar
+            foreach (array_chunk($notifications, 500) as $chunk) {
+                Notification::insertOrIgnore($chunk);
             }
         }
 
