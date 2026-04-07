@@ -152,7 +152,7 @@ class CartController extends Controller
     //     return response()->json(['success' => true, 'cart' => $cart], 200);
     // }
 
-    // Fungsi untuk update data produk di dalam keranjang 
+    // Fungsi untuk update data produk di dalam keranjang
     public function updateCart(Request $request, $id)
     {
         $user = Auth::user();
@@ -209,25 +209,122 @@ class CartController extends Controller
     }
 
     // Fungsi untuk melakukan checkout pada biaya produk dalam keranjang
+    // public function checkout()
+    // {
+    //     DB::beginTransaction();
+    //     try {
+    //         // $cartItems = Cart::all();
+
+    //         $userId = Auth::id();
+    //         $cartItems = Cart::where('user_id', $userId)->get();
+
+    //         // $userId = auth()->id();
+
+    //         if ($cartItems->isEmpty()) {
+    //             return response()->json(['success' => false, 'message' => 'Keranjang kosong'], 400);
+    //         }
+
+    //         // Ambil metode dari item pertama dalam cart
+    //         $firstItem = $cartItems->first();
+    //         $shippingMethod = $firstItem->shipping_method;
+    //         $paymentMethod = $firstItem->payment_method;
+
+    //         $shippingCost = match ($shippingMethod) {
+    //             'Express' => 3500,
+    //             'Reguler' => 1750,
+    //             default => 0,
+    //         };
+
+    //         $gross_amount = $cartItems->sum('gross_amount');
+    //         $total_payment = $gross_amount; // kalau belum ada ongkir
+    //         $transactionCode = 'TRX' . strtoupper(uniqid());
+
+    //         // Tentukan status berdasarkan shipping method
+    //         $initialStatus = ($shippingMethod === 'Ambil di tempat') ? 'Pesanan selesai' : 'Dalam pengemasan';
+    //         $is_final = ($shippingMethod === 'Ambil di tempat') ? 'Sudah selesai' : 'Belum selesai';
+
+    //         $transaction = Transaction::create([
+    //             'transaction_code' => $transactionCode,
+    //             'gross_amount' => $gross_amount,
+    //             'total_payment' => $total_payment + $shippingCost,
+    //             'payment_method' => $paymentMethod,
+    //             'shipping_method' => $shippingMethod,
+    //             'shipping_cost' => $shippingCost,
+    //             // 'status' => 'Dalam pengemasan', // status awal default
+    //             'status' => $initialStatus, // status awal default
+    //             'user_id' => $userId,
+    //             'transaction_date' => now(),
+    //             'is_final' => $is_final
+    //         ]);
+
+    //         TransactionStatusHistory::create([
+    //             'transaction_id' => $transaction->id,
+    //             // 'status' => 'Dalam pengemasan',
+    //             'status' => $initialStatus,
+    //             'changed_at' => now(),
+    //         ]);
+
+    //         foreach ($cartItems as $item) {
+    //             $stock = ProductStock::where('product_id', $item->product_id)
+    //                 ->where('exp_date', $item->exp_date)
+    //                 ->where('stock', '>=', $item->quantity)
+    //                 ->first();
+
+    //             if (!$stock) {
+    //                 return response()->json([
+    //                     'success' => false,
+    //                     'message' => "Stok tidak mencukupi untuk produk ID {$item->product_id} dengan tanggal expired {$item->exp_date}"
+    //                 ], 400);
+    //             }
+
+    //             $product = Product::find($item->product_id); // pastikan model Product ada
+
+    //             TransactionDetail::create([
+    //                 'transaction_id' => $transaction->id,
+    //                 'product_id' => $item->product_id,
+    //                 'exp_date' => $item->exp_date,
+    //                 'quantity' => $item->quantity,
+    //                 'product_name' => $product->name,
+    //                 'product_code' => $product->code,
+    //                 'product_price' => $product->price,
+    //                 'product_photo' => $product->photo,
+    //                 'stock_before' => $stock->stock + $item->quantity,
+    //                 'stock_after' => $stock->stock,
+    //             ]);
+
+    //             $stock->stock -= $item->quantity;
+    //             $stock->stock == 0 ? $stock->delete() : $stock->save();
+
+    //             $item->delete();
+    //         }
+
+    //         DB::commit();
+    //         return response()->json(['success' => true, 'transaction' => $transaction], 201);
+    //     }
+
+    //     catch (\Exception $e) {
+    //         DB::rollBack();
+    //         return response()->json([
+    //             'error' => 'Gagal melakukan transaksi',
+    //             'message' => $e->getMessage(),
+    //             'trace' => $e->getTrace()
+    //         ], 500);
+    //     }
+    // }
+
     public function checkout()
     {
         DB::beginTransaction();
         try {
-            // $cartItems = Cart::all();
-
             $userId = Auth::id();
             $cartItems = Cart::where('user_id', $userId)->get();
-
-            // $userId = auth()->id();
 
             if ($cartItems->isEmpty()) {
                 return response()->json(['success' => false, 'message' => 'Keranjang kosong'], 400);
             }
 
-            // Ambil metode dari item pertama dalam cart
             $firstItem = $cartItems->first();
             $shippingMethod = $firstItem->shipping_method;
-            $paymentMethod = $firstItem->payment_method;
 
             $shippingCost = match ($shippingMethod) {
                 'Express' => 3500,
@@ -236,22 +333,21 @@ class CartController extends Controller
             };
 
             $gross_amount = $cartItems->sum('gross_amount');
-            $total_payment = $gross_amount; // kalau belum ada ongkir
+            $total_payment = $gross_amount + $shippingCost;
             $transactionCode = 'TRX' . strtoupper(uniqid());
 
-            // Tentukan status berdasarkan shipping method
-            $initialStatus = ($shippingMethod === 'Ambil di tempat') ? 'Pesanan selesai' : 'Dalam pengemasan';
-            $is_final = ($shippingMethod === 'Ambil di tempat') ? 'Sudah selesai' : 'Belum selesai';
+            // Transaksi masuk dengan status default menunggu pembayaran
+            $initialStatus = 'Belum bayar';
+            $is_final = 'Belum selesai';
 
             $transaction = Transaction::create([
                 'transaction_code' => $transactionCode,
                 'gross_amount' => $gross_amount,
-                'total_payment' => $total_payment + $shippingCost,
-                'payment_method' => $paymentMethod,
+                'total_payment' => $total_payment,
+                'payment_method' => 'Xendit', // Hardcode ke Xendit
                 'shipping_method' => $shippingMethod,
                 'shipping_cost' => $shippingCost,
-                // 'status' => 'Dalam pengemasan', // status awal default
-                'status' => $initialStatus, // status awal default
+                'status' => $initialStatus,
                 'user_id' => $userId,
                 'transaction_date' => now(),
                 'is_final' => $is_final
@@ -259,7 +355,6 @@ class CartController extends Controller
 
             TransactionStatusHistory::create([
                 'transaction_id' => $transaction->id,
-                // 'status' => 'Dalam pengemasan',
                 'status' => $initialStatus,
                 'changed_at' => now(),
             ]);
@@ -271,13 +366,10 @@ class CartController extends Controller
                     ->first();
 
                 if (!$stock) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => "Stok tidak mencukupi untuk produk ID {$item->product_id} dengan tanggal expired {$item->exp_date}"
-                    ], 400);
+                    throw new \Exception("Stok tidak mencukupi untuk produk ID {$item->product_id}");
                 }
 
-                $product = Product::find($item->product_id); // pastikan model Product ada
+                $product = Product::find($item->product_id);
 
                 TransactionDetail::create([
                     'transaction_id' => $transaction->id,
@@ -288,26 +380,56 @@ class CartController extends Controller
                     'product_code' => $product->code,
                     'product_price' => $product->price,
                     'product_photo' => $product->photo,
-                    'stock_before' => $stock->stock + $item->quantity,
-                    'stock_after' => $stock->stock,
+                    'stock_before' => $stock->stock, // Logika diperbaiki agar mencatat stok real sebelum dikurangi
+                    'stock_after' => $stock->stock - $item->quantity,
                 ]);
 
                 $stock->stock -= $item->quantity;
                 $stock->stock == 0 ? $stock->delete() : $stock->save();
-
                 $item->delete();
             }
 
+            // === INTEGRASI XENDIT API ===
+            $secretKey = env('XENDIT_SECRET_KEY'); // Pastikan ini ada di .env kamu
+
+            $xenditResponse = Http::withBasicAuth($secretKey, '')
+                ->post('https://api.xendit.co/v2/invoices', [
+                    'external_id' => $transactionCode,
+                    'amount' => $total_payment,
+                    'description' => 'Pembayaran Pesanan ' . $transactionCode,
+                    'customer' => [
+                        'given_names' => Auth::user()->name,
+                        'email' => Auth::user()->email,
+                    ],
+                    'invoice_duration' => 86400, // 24 jam
+                ]);
+
+            if ($xenditResponse->failed()) {
+                throw new \Exception('Gagal membuat invoice pembayaran: ' . $xenditResponse->body());
+            }
+
+            $invoiceData = $xenditResponse->json();
+
+            Payment::create([
+                'transaction_id' => $transaction->id,
+                'external_id' => $transactionCode,
+                'payment_url' => $invoiceData['invoice_url'],
+                'status' => 'PENDING',
+                'amount' => $total_payment,
+            ]);
+
             DB::commit();
-            return response()->json(['success' => true, 'transaction' => $transaction], 201);
-        }
-      
-        catch (\Exception $e) {
+            return response()->json([
+                'success' => true,
+                'transaction' => $transaction,
+                'checkout_url' => $invoiceData['invoice_url'] // URL ini yang akan dibuka Flutter
+            ], 201);
+
+        } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
                 'error' => 'Gagal melakukan transaksi',
                 'message' => $e->getMessage(),
-                'trace' => $e->getTrace()
             ], 500);
         }
     }
@@ -315,7 +437,7 @@ class CartController extends Controller
     // Fungsi untuk menampilkan data keranjang
     public function show()
     {
-        $userId = Auth::id(); 
+        $userId = Auth::id();
 
         // Ambil semua item cart milik user saat ini
         $cartItems = Cart::with('product')
