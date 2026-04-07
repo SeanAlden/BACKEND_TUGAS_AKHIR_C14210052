@@ -55,7 +55,6 @@ class TransactionController extends Controller
     //     }
     // }
 
-    // Menampilkan semua transaksi milik user yang login
     public function index()
     {
         try {
