@@ -16,7 +16,6 @@ use Illuminate\Container\Attributes\DB as AttributesDB;
 
 class TransactionController extends Controller
 {
-    // Menampilkan semua transaksi milik user yang login
     // public function index()
     // {
     //     try {
@@ -120,7 +119,7 @@ class TransactionController extends Controller
     //             $query->where('user_id', $user->id);
     //         }
 
-    //         // Gunakan cursor() atau lazy() jika data sangat besar, 
+    //         // Gunakan cursor() atau lazy() jika data sangat besar,
     //         // tapi untuk kecepatan standar API, get() sudah cukup dengan seleksi kolom.
     //         $transactions = $query->latest()->get();
 
@@ -563,7 +562,7 @@ class TransactionController extends Controller
     //     }
     // }
 
-    // Fungsi untuk menampilkan data 
+    // Fungsi untuk menampilkan data
     // public function adminDetailShow($id)
     // {
     //     try {
