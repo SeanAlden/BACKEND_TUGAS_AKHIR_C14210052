@@ -273,7 +273,6 @@ class TransactionController extends Controller
         }
     }
 
-    // Fungsi update status transaksi
     // public function updateStatus(Request $request, $id)
     // {
     //     $request->validate([
