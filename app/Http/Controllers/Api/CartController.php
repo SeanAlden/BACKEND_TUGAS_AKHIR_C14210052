@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Models\Cart;
 use App\Models\Product;
+use App\Models\Payment;
 use App\Models\CartDetail;
 use App\Models\Transaction;
 use App\Models\ProductStock;
@@ -12,6 +13,7 @@ use App\Models\TransactionDetail;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
 use App\Models\TransactionStatusHistory;
 
 class CartController extends Controller
@@ -96,9 +98,9 @@ class CartController extends Controller
 
         foreach ($productStocks as $stock) {
             $exp_date = $stock->exp_date;
-            $quantity = $request->quantities[$exp_date] ?? 0; // Ambil quantity dari request atau 0 jika tidak ada
+            $quantity = $request->quantities[$exp_date] ?? 0;  // Ambil quantity dari request atau 0 jika tidak ada
 
-            if ($quantity >= 0) { // Hanya tambahkan jika quantity lebih dari 0
+            if ($quantity >= 0) {  // Hanya tambahkan jika quantity lebih dari 0
                 $existingCart = Cart::where('user_id', $userId)
                     ->where('product_id', $request->product_id)
                     ->where('exp_date', $exp_date)
@@ -344,7 +346,7 @@ class CartController extends Controller
                 'transaction_code' => $transactionCode,
                 'gross_amount' => $gross_amount,
                 'total_payment' => $total_payment,
-                'payment_method' => 'Xendit', // Hardcode ke Xendit
+                'payment_method' => 'Xendit',  // Hardcode ke Xendit
                 'shipping_method' => $shippingMethod,
                 'shipping_cost' => $shippingCost,
                 'status' => $initialStatus,
@@ -380,7 +382,7 @@ class CartController extends Controller
                     'product_code' => $product->code,
                     'product_price' => $product->price,
                     'product_photo' => $product->photo,
-                    'stock_before' => $stock->stock, // Logika diperbaiki agar mencatat stok real sebelum dikurangi
+                    'stock_before' => $stock->stock,  // Logika diperbaiki agar mencatat stok real sebelum dikurangi
                     'stock_after' => $stock->stock - $item->quantity,
                 ]);
 
@@ -390,7 +392,7 @@ class CartController extends Controller
             }
 
             // === INTEGRASI XENDIT API ===
-            $secretKey = env('XENDIT_SECRET_KEY'); // Pastikan ini ada di .env kamu
+            $secretKey = env('XENDIT_SECRET_KEY');  // Pastikan ini ada di .env kamu
 
             $xenditResponse = Http::withBasicAuth($secretKey, '')
                 ->post('https://api.xendit.co/v2/invoices', [
@@ -401,7 +403,7 @@ class CartController extends Controller
                         'given_names' => Auth::user()->name,
                         'email' => Auth::user()->email,
                     ],
-                    'invoice_duration' => 86400, // 24 jam
+                    'invoice_duration' => 86400,  // 24 jam
                 ]);
 
             if ($xenditResponse->failed()) {
@@ -422,14 +424,25 @@ class CartController extends Controller
             return response()->json([
                 'success' => true,
                 'transaction' => $transaction,
-                'checkout_url' => $invoiceData['invoice_url'] // URL ini yang akan dibuka Flutter
+                'checkout_url' => $invoiceData['invoice_url']  // URL ini yang akan dibuka Flutter
             ], 201);
 
+            // } catch (\Exception $e) {
+            //     DB::rollBack();
+            //     return response()->json([
+            //         'error' => 'Gagal melakukan transaksi',
+            //         'message' => $e->getMessage(),
+            //     ], 500);
+            // }
         } catch (\Exception $e) {
             DB::rollBack();
+            // PASTIKAN ini mengembalikan response()->json, bukan view atau abort biasa
             return response()->json([
+                'success' => false,  // Tambahkan flag success false untuk konsistensi
                 'error' => 'Gagal melakukan transaksi',
                 'message' => $e->getMessage(),
+                'file' => $e->getFile(),  // Opsional: Tambahkan ini sementara untuk debugging
+                'line' => $e->getLine()  // Opsional: Tambahkan ini sementara untuk debugging
             ], 500);
         }
     }
@@ -494,14 +507,14 @@ class CartController extends Controller
             'cart' => $mergedCart,
             'shipping_methods' => $shippingMethods,
             'payment_methods' => $paymentMethods,
-            'product_exp_dates' => $productExpDateStock, // tambahan baru
+            'product_exp_dates' => $productExpDateStock,  // tambahan baru
         ], 200);
     }
 
     // Fungsi untuk update metode pengiriman, dan metode pembayaran
     public function updateField(Request $request)
     {
-        $user = Auth::user(); // atau sesuaikan dengan otentikasi kamu
+        $user = Auth::user();  // atau sesuaikan dengan otentikasi kamu
         $field = $request->input('field');
         $value = $request->input('value');
 
