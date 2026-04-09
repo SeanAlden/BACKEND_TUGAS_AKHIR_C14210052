@@ -75,6 +75,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('transactions/{id}/final-save', [TransactionController::class, 'finalSave']);
     Route::get('/transactions/{id}/check-final', [TransactionController::class, 'checkFinalStatus']);
     Route::get('/dashboard', [TransactionController::class, 'dashboard']);
+    // Tambahkan baris ini di dalam group middleware auth:sanctum
+    Route::get('/transaction/status/{code}', [App\Http\Controllers\Api\TransactionController::class, 'checkStatus']);
 });
 
 Route::middleware('auth:sanctum')->group(function () {

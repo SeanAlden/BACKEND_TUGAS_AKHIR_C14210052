@@ -720,6 +720,24 @@ class TransactionController extends Controller
             'selected_year' => (int) $year,
         ]);
     }
+
+    public function checkStatus($code)
+    {
+        $userId = Auth::id();
+        // Cari transaksi berdasarkan kode dan pastikan milik user yang sedang login
+        $transaction = Transaction::where('transaction_code', $code)
+            ->where('user_id', $userId)
+            ->first();
+
+        if (!$transaction) {
+            return response()->json(['message' => 'Transaksi tidak ditemukan'], 404);
+        }
+
+        return response()->json([
+            'status' => $transaction->status, // Misal: 'Pembayaran lunas'
+            'is_final' => $transaction->is_final,
+        ]);
+    }
 }
 
 
