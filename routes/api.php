@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\AnalysisController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\EmployeeController;
@@ -131,3 +132,5 @@ Route::prefix('notifications')->group(function () {
     Route::get('/', [NotificationController::class, 'index']);
     Route::put('/{id}', [NotificationController::class, 'read']);
 });
+
+Route::post('/payments/callback', [PaymentController::class, 'webhook']);
