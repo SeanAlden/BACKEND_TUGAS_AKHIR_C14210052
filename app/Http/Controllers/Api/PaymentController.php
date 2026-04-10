@@ -13,7 +13,6 @@ class PaymentController extends Controller
 {
     public function webhook(Request $request)
     {
-        // Token Verifikasi dari Dashboard Xendit untuk keamanan (Opsional tapi sangat disarankan)
         $xenditToken = env('XENDIT_CALLBACK_TOKEN');
         if ($request->header('x-callback-token') !== $xenditToken) {
             return response()->json(['error' => 'Unauthorized'], 401);
