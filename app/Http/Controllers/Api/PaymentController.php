@@ -21,7 +21,7 @@ class PaymentController extends Controller
         DB::beginTransaction();
         try {
             $external_id = $request->input('external_id');
-            $status = $request->input('status'); // 'PAID', 'EXPIRED'
+            $status = $request->input('status');
 
             $transaction = Transaction::where('transaction_code', $external_id)->first();
 
