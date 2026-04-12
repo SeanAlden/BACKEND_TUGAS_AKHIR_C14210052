@@ -47,7 +47,7 @@ class AuthController extends Controller
             'email' => $request->email,
             'phone' => $request->phone,
             'password' => Hash::make($request->password),
-            'usertype' => 'employee', // default value
+            'usertype' => 'employee',
         ]);
 
         return response()->json([
@@ -82,7 +82,7 @@ class AuthController extends Controller
         return response($reesponse, 201);
     }
 
-    // Fungsi untuk melakukan login 
+    // Fungsi untuk melakukan login
     public function login(Request $request)
     {
         $request->validate([
@@ -338,7 +338,7 @@ class AuthController extends Controller
         ], 400);
     }
 
-    // public function getProfileImage(Request $request) 
+    // public function getProfileImage(Request $request)
     // {
 
     //     $user = Auth::user();
