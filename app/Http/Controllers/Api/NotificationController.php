@@ -9,7 +9,6 @@ use Illuminate\Routing\Controller;
 class NotificationController extends Controller
 {
 
-    // Menampilkan semua notifikasi
     public function index()
     {
         $notifications = Notification::orderBy('notification_time', 'desc')->where('condition', 'unread')->get();
