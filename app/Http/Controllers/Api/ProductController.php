@@ -75,7 +75,7 @@ class ProductController extends Controller
                         'message' => "{$product->name} dengan kadaluarsa " . $expDate->format('d-m-Y') . " tersisa {$stock->stock} stok lagi",
                         'notification_type' => 'Sisa Stok',
                         'notification_time' => $now,
-                        'created_at' => $now, // Penting jika menggunakan insert
+                        'created_at' => $now,
                         'updated_at' => $now
                     ];
                 }
@@ -709,7 +709,7 @@ class ProductController extends Controller
         return response()->json(['stock' => $stock ? $stock->stock : 0]);
     }
 
-    // Fungsi untuk mendapatkan data laporan barang masuk dan barang keluar  
+    // Fungsi untuk mendapatkan data laporan barang masuk dan barang keluar
     public function productStocksReport()
     {
         $entryStocks = DB::table('entry_products')
