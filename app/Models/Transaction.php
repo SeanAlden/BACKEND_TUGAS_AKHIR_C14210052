@@ -36,7 +36,7 @@ class Transaction extends Model
 
     public function products()
     {
-        return $this->belongsToMany(Product::class, 'transaction_details')  // Menyebutkan nama tabel pivot secara eksplisit
+        return $this->belongsToMany(Product::class, 'transaction_details') 
             ->withPivot('quantity')
             ->withTimestamps();
     }
