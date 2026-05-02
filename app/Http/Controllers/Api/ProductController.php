@@ -80,7 +80,6 @@ class ProductController extends Controller
                     ];
                 }
 
-                // Cek Tanggal Kadaluarsa
                 if ($expDate->between($now, $soon)) {
                     $notifications[] = [
                         'message' => "Pada {$product->name}, terdapat stok dengan tanggal expired " . $expDate->format('d-m-Y') . ' yang sudah dekat',
