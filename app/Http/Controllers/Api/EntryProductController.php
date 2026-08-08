@@ -76,6 +76,7 @@ class EntryProductController extends Controller
             'exp_date' => 'required_without:new_exp_date|nullable|date',
             'new_exp_date' => 'required_without:exp_date|nullable|date|after_or_equal:today',
         ]);
+        
 
         $expDateToUse = '';
         $previousStock = 0;
@@ -254,7 +255,7 @@ class EntryProductController extends Controller
         if (!$productStock) {
             return response()->json(['success' => false, 'message' => 'Stok produk tidak ditemukan'], 400);
         }
-        
+
         // Simpan stok sebelum perubahan
         $previousStock = $productStock->stock;
 
